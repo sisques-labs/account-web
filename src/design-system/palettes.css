@@ -1,0 +1,119 @@
+/* =============================================================================
+   Design System — Palette Overrides  (Tailwind v4, corrected)
+   ─────────────────────────────────────────────────────────────────────────────
+   Only bare vars (--paper, --forest …) need to be overridden here.
+   Because theme.css uses @theme inline, the chain is:
+
+     Tailwind utility  →  var(--color-forest)  →  var(--forest)  →  ← here
+
+   So changing --forest in any selector automatically updates:
+     • Every Tailwind utility class  (bg-forest, text-forest …)
+     • Every shadcn component        (--primary resolves through --forest)
+     • Every component      (components.css reads var(--forest))
+
+   COUPLING NOTE: body.palette-dark and html.dark body share a SINGLE rule
+   block so dark values can never drift between the palette toggle and the
+   shadcn/next-themes html.dark convention. Do NOT split this selector list.
+   ============================================================================= */
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DARK PALETTE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.palette-dark,
+body.palette-dark .paper-grain,
+html.dark body,
+html.dark body .paper-grain {
+  --paper:       oklch(0.20 0.018 80);
+  --paper-2:     oklch(0.24 0.022 80);
+  --paper-3:     oklch(0.28 0.025 80);
+
+  --ink:         oklch(0.94 0.018 80);
+  --ink-2:       oklch(0.78 0.022 80);
+  --ink-3:       oklch(0.60 0.02  70);
+
+  --rule:        oklch(0.40 0.025 70);
+
+  --forest:      oklch(0.72 0.10  145);
+  --forest-2:    oklch(0.78 0.08  145);
+  --forest-3:    oklch(0.55 0.07  145);
+  --forest-bg:   oklch(0.30 0.04  140);
+
+  --honey:       oklch(0.80 0.13  75);
+  --honey-2:     oklch(0.86 0.13  65);
+  --terracotta:  oklch(0.76 0.13  35);
+  --sage:        oklch(0.62 0.04  130);
+  --plum:        oklch(0.68 0.08  340);
+  --sky:         oklch(0.78 0.07  230);
+
+  /* ✚ chip bg tints — were missing in v1, chips kept light-mode background */
+  --honey-bg:    oklch(0.28 0.05  75);
+  --terra-bg:    oklch(0.28 0.05  35);
+  --sage-bg:     oklch(0.28 0.03  130);
+  --plum-bg:     oklch(0.28 0.04  340);
+  --sky-bg:      oklch(0.28 0.04  230);
+}
+
+/* Dark mode visual refinements — explicit palette toggle only */
+body.palette-dark {
+  background: oklch(0.18 0.018 80) !important;
+}
+
+body.palette-dark .card {
+  background-color: oklch(0.22 0.018 80);
+  border-color:     oklch(0.32 0.02  70);
+}
+
+/* Chip overrides kept for specificity — bare vars above handle the colours,
+   but .chip has an explicit background-color rule that needs a nudge.        */
+body.palette-dark .chip               { background-color: oklch(0.28 0.018 80); color: oklch(0.78 0.022 80); }
+body.palette-dark .chip.forest        { background-color: oklch(0.30 0.04  140); color: oklch(0.72 0.10  145); }
+body.palette-dark .chip.honey         { background-color: oklch(0.28 0.05  75);  color: oklch(0.80 0.13  75);  }
+body.palette-dark .chip.terra         { background-color: oklch(0.28 0.05  35);  color: oklch(0.76 0.13  35);  }
+body.palette-dark .chip.sage          { background-color: oklch(0.28 0.03  130); color: oklch(0.62 0.04  130); }
+
+/* Paper grain — dark variant */
+body.palette-dark .paper-grain-dark,
+html.dark body    .paper-grain-dark {
+  background-color:  oklch(0.18 0.018 80);
+  background-image:  radial-gradient(circle at 1px 1px, oklch(0.30 0.02 80 / 0.6) 1px, transparent 0);
+  background-size:   24px 24px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PASTEL PALETTE
+   Applied via body.palette-pastel only — no html.dark bridge needed.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.palette-pastel {
+  --paper:       oklch(0.97 0.025 95);
+  --paper-2:     oklch(0.94 0.03  95);
+  --paper-3:     oklch(0.90 0.035 95);
+
+  --ink:         oklch(0.30 0.04  340);
+  --ink-2:       oklch(0.46 0.04  340);
+  --ink-3:       oklch(0.62 0.03  340);
+
+  --rule:        oklch(0.82 0.04  95);
+
+  --forest:      oklch(0.58 0.08  155);
+  --forest-2:    oklch(0.68 0.08  155);
+  --forest-3:    oklch(0.80 0.07  155);
+  --forest-bg:   oklch(0.94 0.05  150);
+
+  --honey:       oklch(0.82 0.11  60);
+  --honey-2:     oklch(0.72 0.12  50);
+  --terracotta:  oklch(0.70 0.12  20);
+  --sage:        oklch(0.85 0.05  145);
+  --plum:        oklch(0.62 0.08  340);
+  --sky:         oklch(0.78 0.07  220);
+
+  /* ✚ chip bg tints — were missing in v1 */
+  --honey-bg:    oklch(0.97 0.06  65);
+  --terra-bg:    oklch(0.97 0.05  30);
+  --sage-bg:     oklch(0.96 0.04  145);
+  --plum-bg:     oklch(0.95 0.04  340);
+  --sky-bg:      oklch(0.95 0.04  220);
+}

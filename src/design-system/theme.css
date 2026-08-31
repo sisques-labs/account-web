@@ -1,0 +1,121 @@
+/* =============================================================================
+   Design System — Theme  (Tailwind v4, corrected)
+   ─────────────────────────────────────────────────────────────────────────────
+   ARCHITECTURE
+   ┌──────────────┬──────────────────────────────────────────────────────────┐
+   │ :root        │ Bare vars (--paper, --forest …) = single source of truth │
+   │              │ palettes.css only needs to override THESE.               │
+   ├──────────────┼──────────────────────────────────────────────────────────┤
+   │ @theme inline│ Maps --color-* → var(--bare).  "inline" = Tailwind emits │
+   │              │ utilities with var() refs at runtime, so the CSS cascade  │
+   │              │ from palettes.css flows through automatically.            │
+   │              │                                                           │
+   │              │ Also registers --font-* → Tailwind font-sans/serif utils. │
+   └──────────────┴──────────────────────────────────────────────────────────┘
+
+   WHY @theme inline MATTERS
+   • @theme (plain) → Tailwind bakes the oklch() value into --color-* on :root.
+     Overriding --forest in palettes.css has NO effect on bg-forest utility.
+   • @theme inline  → --color-forest: var(--forest). Override --forest anywhere
+     in the cascade and every Tailwind utility + shadcn component picks it up.
+   ============================================================================= */
+
+/* ─── 1. Source of truth — bare tokens ──────────────────────────────────────
+   All values live here ONCE.  palettes.css overrides these selectively.
+   components.css and globals.css reference these directly as var(--paper) etc.
+   ─────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Paper (background surfaces) */
+  --paper:       oklch(0.96 0.018 80);
+  --paper-2:     oklch(0.93 0.022 80);
+  --paper-3:     oklch(0.88 0.028 80);
+
+  /* Ink (text) */
+  --ink:         oklch(0.22 0.025 60);
+  --ink-2:       oklch(0.38 0.03  60);
+  --ink-3:       oklch(0.55 0.02  60);
+
+  /* Rule (borders / dividers) */
+  --rule:        oklch(0.78 0.03  70);
+
+  /* Forest — primary brand */
+  --forest:      oklch(0.42 0.07  145);
+  --forest-2:    oklch(0.55 0.08  145);
+  --forest-3:    oklch(0.72 0.07  145);
+  --forest-bg:   oklch(0.92 0.03  140);
+
+  /* Accent colours */
+  --honey:       oklch(0.74 0.12  75);
+  --honey-2:     oklch(0.62 0.13  65);
+  --terracotta:  oklch(0.62 0.13  35);
+  --sage:        oklch(0.78 0.04  130);
+  --plum:        oklch(0.48 0.08  340);
+  --sky:         oklch(0.68 0.07  230);
+
+  /* Surface tints (chip / tag backgrounds) */
+  --honey-bg:    oklch(0.96 0.04  75);
+  --terra-bg:    oklch(0.94 0.04  35);
+  --sage-bg:     oklch(0.94 0.03  130);
+  --plum-bg:     oklch(0.92 0.03  340);
+  --sky-bg:      oklch(0.93 0.03  230);
+
+  /* Static */
+  --white:       oklch(1 0 0);
+}
+
+/* ─── 2. Tailwind v4 token registration ─────────────────────────────────────
+   @theme inline: Tailwind writes --color-* as var(--bare) on :root, so
+   bg-forest / text-ink / etc. resolve through the cascade at runtime.
+
+   Generated utilities (examples):
+     bg-paper        → background-color: var(--color-paper)
+     text-ink-2      → color: var(--color-ink-2)
+     border-rule     → border-color: var(--color-rule)
+     fill-forest     → fill: var(--color-forest)
+     font-serif      → font-family: var(--font-serif)
+   ─────────────────────────────────────────────────────────────────────────── */
+@theme inline {
+
+  /* ── Colors ── */
+  --color-paper:       var(--paper);
+  --color-paper-2:     var(--paper-2);
+  --color-paper-3:     var(--paper-3);
+
+  --color-ink:         var(--ink);
+  --color-ink-2:       var(--ink-2);
+  --color-ink-3:       var(--ink-3);
+
+  --color-rule:        var(--rule);
+
+  --color-forest:      var(--forest);
+  --color-forest-2:    var(--forest-2);
+  --color-forest-3:    var(--forest-3);
+  --color-forest-bg:   var(--forest-bg);
+
+  --color-honey:       var(--honey);
+  --color-honey-2:     var(--honey-2);
+  --color-terracotta:  var(--terracotta);
+  --color-sage:        var(--sage);
+  --color-plum:        var(--plum);
+  --color-sky:         var(--sky);
+
+  --color-destructive:            var(--terracotta);
+  --color-destructive-foreground: var(--white);
+
+  --color-honey-bg:    var(--honey-bg);
+  --color-terra-bg:    var(--terra-bg);
+  --color-sage-bg:     var(--sage-bg);
+  --color-plum-bg:     var(--plum-bg);
+  --color-sky-bg:      var(--sky-bg);
+
+  --color-white:       var(--white);
+
+  /* ── Fonts ──
+     Fallback stacks guarantee text renders before Next.js injects its var.
+     @theme inline outputs --font-* as CSS props on :root, so components.css
+     can still use var(--font-sans) / var(--font-serif) etc. directly.        */
+  --font-serif:  var(--font-newsreader),    "Source Serif Pro", Georgia, serif;
+  --font-sans:   var(--font-dm-sans),       -apple-system, "Segoe UI", sans-serif;
+  --font-hand:   var(--font-caveat),        "Bradley Hand", cursive;
+  --font-mono:   var(--font-jetbrains-mono), ui-monospace, monospace;
+}

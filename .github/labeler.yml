@@ -1,0 +1,47 @@
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.md"
+          - "docs/**"
+          - "openspec/**"
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.spec.ts"
+          - "**/*.spec.tsx"
+          - "**/*.test.ts"
+          - "**/*.test.tsx"
+          - "vitest.config.ts"
+          - "vitest.setup.ts"
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/workflows/**"
+          - ".github/actions/**"
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "package.json"
+          - "pnpm-lock.yaml"
+          - "pnpm-workspace.yaml"
+          - "renovate.json"
+
+docker:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "Dockerfile"
+          - "docker/**"
+          - "docker-compose*.yml"
+
+config:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "*.config.*"
+          - "tsconfig*.json"
+          - "eslint.config.mjs"
+          - "postcss.config.mjs"
+          - "next.config.ts"
+          - "cliff.toml"

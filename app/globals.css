@@ -1,0 +1,49 @@
+@import "tailwindcss";
+@import "../src/design-system/theme.css";
+@import "../src/design-system/palettes.css";
+@import "../src/design-system/components.css";
+
+@layer base {
+  :root {
+    /* ── shadcn semantic bridge ───────────────────────────────────────────────
+       All values alias the design tokens in theme.css. Because theme.css uses
+       @theme inline, every palette override in palettes.css cascades through
+       here automatically — no extra work needed when adding a new palette.
+       ─────────────────────────────────────────────────────────────────────── */
+    --background: var(--paper);
+    --foreground: var(--ink);
+
+    --card: var(--paper);
+    --card-foreground: var(--ink);
+
+    --popover: var(--paper);
+    --popover-foreground: var(--ink);
+
+    --primary: var(--forest);
+    --primary-foreground: var(--white);
+
+    --secondary: var(--paper-2);
+    --secondary-foreground: var(--ink-2);
+
+    --muted: var(--paper-2);
+    --muted-foreground: var(--ink-3);
+
+    --accent: var(--forest-bg);
+    --accent-foreground: var(--forest);
+
+    --destructive: var(--terracotta);
+    --destructive-foreground: var(--white);
+
+    --border: var(--rule);
+    --input: var(--rule);
+    --ring: var(--forest-2);
+
+    --radius: 0.5rem;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+}

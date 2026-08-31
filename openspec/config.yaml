@@ -1,0 +1,204 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Next.js 16 (App Router, Node server mode), React 19, TypeScript (strict), pnpm@9.15.4
+  State: Zustand (in-memory, no persistence)
+  HTTP: Axios (Bearer token interceptor, 401 refresh mutex)
+  GraphQL: Apollo Client v4 (@apollo/client/react)
+  Server state / caching: TanStack Query v5
+  Forms: React Hook Form + Zod
+  UI: shadcn/ui (Radix UI + Tailwind v4) in src/shared/presentation/components/ui/
+  Icons: lucide-react
+  Architecture: DDD + Hexagonal (Screaming Architecture). No bounded contexts yet — this is a fresh frontend template; the first context added defines the pattern every subsequent one follows. Layers per context: domain / application / infrastructure / presentation
+  Providers: each context owns src/core/{context}/presentation/providers/{context}.providers.tsx;
+             shared/presentation/providers/providers.tsx aggregates all context providers.
+  i18n: custom TypeScript dictionaries (no external library, no JSON) per context under
+        presentation/i18n/en.ts + es.ts, aggregated in shared/presentation/i18n/get-dictionary.ts
+
+testing:
+  strict_tdd: true
+  test_command: "pnpm test"
+  coverage_command: "pnpm test:coverage"
+  coverage_threshold: 80
+  e2e_command: "pnpm e2e"
+  layers:
+    unit: { available: true, tool: "vitest + react testing library" }
+    integration: { available: false, note: "pending implementation" }
+    e2e: { available: false, tool: "playwright", note: "pending implementation" }
+  quality:
+    linter: { available: true, command: "pnpm lint" }
+    type_checker: { available: true, command: "pnpm tsc --noEmit" }
+
+conventions:
+  naming:
+    use_cases: "{name}.use-case.ts — file; class exported as {Name}UseCase. Lives in application/use-cases/{name}/."
+    repository_ports: "{name}.repository.port.ts"
+    repositories: |
+      GQL (current standard):
+        repository: infrastructure/repositories/graphql/{context}.gql.repository.ts
+        queries:   infrastructure/repositories/graphql/queries/{operation-name}.query.ts
+        mutations: infrastructure/repositories/graphql/mutations/{operation-name}.mutation.ts
+        class: {Context}GqlRepository implements I{Context}Repository
+        singleton export: {context}GqlRepository
+    screens: "{name}.screen.tsx — file name; component exported as {Name}Screen (PascalCase). No schemas, no business logic inline — import from schemas/ and hooks/."
+    skeletons: |
+      {name}-skeleton/{name}-skeleton.tsx — loading skeleton for a screen or list.
+      Exported as {Name}Skeleton (PascalCase). Lives alongside other components in
+      presentation/components/{name}-skeleton/.
+      MUST be used as the fallback prop of the <Suspense> that wraps the screen in
+      app/[lang]/…/page.tsx. Never define skeletons inline inside a screen component.
+    schemas: "{name}.schema.ts — Zod schema + inferred type. Lives in presentation/schemas/."
+    hooks: "hooks/{hook-name}/{hook-name}.hook.ts — one folder per hook, kebab-case file name; exported function named use{Name}"
+    providers: "{context}.providers.tsx"
+    models: "{name}.model.ts"
+    interfaces: "{name}.interface.ts"
+    value_objects: "{name}.vo.ts"
+    stores: "{name}.store.ts (Zustand, in infrastructure/store/)"
+    entities: "{name}.entity.ts"
+    components: "{name}.tsx (no suffix — shadcn atoms are self-describing)"
+  structure:
+    app_router: "app/ — Next.js App Router ONLY (pages, layouts, route groups)"
+    domain_code: "src/core/{context}/ — DDD layers (empty until the first context is added)"
+    shared_ui: "src/shared/presentation/components/ui/ — shadcn components"
+    shared_lib: "src/shared/lib/ — cn() and other pure utilities"
+    shared_http: "src/shared/infrastructure/http/ — axios client, Apollo client, refresh mutex"
+    shared_store: "src/shared/infrastructure/store/session.store.ts — access token only; a bounded context's own store holds richer session data"
+    shared_config: "src/shared/config/env.ts — NEXT_PUBLIC_* env constants (GRAPHQL_URL, API_URL)"
+    gql_repos: |
+      src/core/{context}/infrastructure/repositories/graphql/
+        queries/{operation}.query.ts      ← gql`` document, named export
+        mutations/{operation}.mutation.ts ← gql`` document, named export
+        {context}.gql.repository.ts       ← implements port, imports from queries/ + mutations/
+        {context}.gql.repository.spec.ts  ← unit tests; mock apolloClient directly (vi.mock)
+    shared_providers: "src/shared/presentation/providers/ — provider aggregator"
+  layers:
+    domain:
+      - Pure TypeScript — zero framework imports
+      - interfaces/ for DTOs and contracts
+      - models/ for domain models
+    application:
+      - use-cases/{name}/ — one folder per use case
+      - ports/ — repository interfaces
+      - interfaces/ — application-level input/output interfaces (e.g. use-case input DTOs)
+      - Use-case classes take repository via constructor; exported as module singletons
+      - Class name: {Name}UseCase. File name: {name}.use-case.ts
+      - No framework imports (no React, no Zustand direct) — reads/writes store via getState()
+    infrastructure:
+      - repositories/graphql/ — Apollo GQL implementations of ports (current standard)
+      - repositories/graphql/queries/ — gql document files ({name}.query.ts), one per query
+      - repositories/graphql/mutations/ — gql document files ({name}.mutation.ts), one per mutation
+      - store/ — Zustand stores (framework-coupled, lives here not in application)
+      - http/ — shared HTTP utilities (axios client, Apollo client, refresh mutex) — cross-cutting, lives in shared/
+    presentation:
+      - screens/ — React page components ('use client', React Hook Form)
+      - hooks/ — TanStack Query useMutation/useQuery wrappers
+      - providers/ — React context providers for the module
+  cross_layer_rules:
+    - domain must never import from application, infrastructure, or presentation
+    - application use-cases may import domain + infrastructure/store (via getState only)
+    - infrastructure may import domain + shared http
+    - presentation may import application use-cases, infrastructure/store, domain interfaces
+
+  components:
+    split_trigger: |
+      Qualitative rule, not a line count. Split a feature component into
+      subcomponents and/or extract a custom hook when it mixes responsibilities:
+      data fetching + business logic + presentation happening in the same
+      component. A long-but-single-responsibility component (e.g. pure markup)
+      is fine; a short component juggling fetch + transform + render is not.
+    props: "interface {Name}Props (extends React.HTMLAttributes<HTMLElement> when it wraps a DOM element); ref passed as a regular prop (React 19 ref-as-prop), not forwardRef."
+    exports: "Named export only (export { Name }), no default exports."
+
+  state_management:
+    decision_axis: "Data origin decides the tool — not scope, not convenience."
+    rules:
+      - source: "Server data (REST/GraphQL)"
+        tool: "TanStack Query (useQuery/useMutation wrapped in presentation/hooks/)"
+      - source: "Client state shared across unrelated components/screens"
+        tool: "Zustand store (infrastructure/store/{name}.store.ts)"
+      - source: "State local to a single component or form"
+        tool: "useState/useReducer inside the component"
+    anti_patterns:
+      - "Never mirror server data into Zustand — TanStack Query is the single source of truth for anything that comes from the API"
+      - "Never reach into a Zustand store for state only one component needs"
+
+  storybook:
+    mandatory: true
+    scope: "Every component under src/shared/presentation/components/ui/ and src/core/{context}/presentation/components/, and every screen under src/core/{context}/presentation/screens/, MUST have a co-located {name}.stories.tsx. No exceptions for 'small' or 'internal' components."
+    naming: "{name}.stories.tsx — co-located next to {name}.tsx / {name}.screen.tsx. title groups by category, e.g. 'UI/Button', 'Screens/Login'."
+    pure_components: "Components that only take props (no internal TanStack Query/Zustand calls) are storied directly — pass fixture data via args, no decorators needed."
+    hook_backed_components_and_screens: |
+      For components/screens that call TanStack Query hooks or Zustand stores internally
+      (most screens, some feature components like modals), do NOT mock the hook module.
+      Seed the REAL hook with fixture data instead, so the story exercises actual
+      production code:
+        - TanStack Query: wrap the story in a decorator that creates a fresh QueryClient
+          and calls queryClient.setQueryData(queryKey, fixtureData) before render, so
+          useQuery/useSuspenseQuery resolve from cache instead of hitting the network.
+        - Zustand: call the store's setState(...) directly before the story renders to
+          seed the state the component reads.
+        - Next.js router/searchParams: @storybook/nextjs mocks next/navigation
+          automatically; use the `nextjs.navigation` story parameter to set route state
+          per story when a screen depends on it.
+    definition_of_done: "A component or screen is not done until its .stories.tsx exists and Storybook builds — this applies from day one, no backlog."
+
+git:
+  base_branch: main
+  strategy: "feature branches → PR → main"
+  commits: "Conventional Commits, free scope. No AI attribution."
+  pr_size_limit: 400
+
+docker:
+  strategy: "2-stage build — node:24-bookworm-slim builder → node:24-bookworm-slim runner"
+  output: "Next.js standalone (output: 'standalone' in next.config.ts)"
+  runner_cmd: "node server.js (no pnpm, no next start — standalone includes its own server)"
+  port: 3000
+
+rules:
+  proposal:
+    - Identify all bounded contexts impacted
+    - Include rollback plan for risky changes
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Respect DDD + Hexagonal layering — no cross-layer violations
+    - Document architecture decisions with rationale
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+    - PRs must stay under 400 lines — split into chained PRs if needed
+  apply:
+    - Follow DDD + Hexagonal patterns per bounded context (see architecture skill)
+    - Use-cases live in application/use-cases/{name}/; one class per use case
+    - Repository interfaces (ports) in application/ports/; implementations in infrastructure/repositories/
+    - Zustand stores in infrastructure/store/ (not application — they're framework-coupled)
+    - Screens in presentation/screens/{name}/; React + React Hook Form + Zod
+    - Hooks in presentation/hooks/; wrap TanStack Query mutations/queries
+    - Shared atomic components in src/shared/presentation/components/ui/ — shadcn pattern
+    - Value objects in domain/value-objects/ using {name}.vo.ts
+    - Tests co-located (.spec.ts next to source file). Write RED first, then GREEN.
+    - No barrel index.ts files unless the module explicitly needs a public API surface
+    - "Any text search input whose value drives a network query (TanStack Query/GraphQL findByCriteria, etc.) MUST debounce the derived value before it reaches the query — never let it trigger a request on every keystroke. Use the shared useDebouncedValue(value, delayMs = 300) hook (src/shared/presentation/hooks/use-debounced-value/) inside the module's use{Context}Filters hook: keep the raw input state updating immediately (so typing feels responsive) and derive the filter/query input from the debounced value instead. Override delayMs only when 300 is demonstrably wrong for that input. Purely client-side (in-memory) filtering with no network cost is exempt."
+    - "A repository's create/update mutation MUST NOT re-fetch the entity via getById/findById just to satisfy its return type when the GraphQL mutation itself only returns a lightweight ack ({ id, success, message }). That re-fetch is a wasted network round trip whenever the caller only needs the id (e.g. to invalidate a query) — verify this: check every current onSuccess callback before assuming a caller needs more. Return CreatedEntity ({ id: string }, shared/domain/interfaces/created-entity.interface.ts) from the port/use-case/repository instead, built directly from the mutation's response. Only return the full entity if a real caller consumes more than the id (e.g. optimistic UI needing the fresh fields right away) — in that case the mutation's GraphQL selection set should request those fields directly rather than triggering a second query."
+    - "New bounded context: nest its {context}.providers.tsx into shared/presentation/providers/providers.tsx and register its en.ts/es.ts in shared/presentation/i18n/get-dictionary.ts — don't leave either wired loose."
+  verify:
+    test_command: "pnpm test"
+    coverage_command: "pnpm test:coverage"
+    coverage_threshold: 80
+    build_command: "pnpm build"
+    typecheck_command: "pnpm tsc --noEmit"
+  archive:
+    - Warn before merging destructive deltas
+
+i18n:
+  strategy: "Custom TypeScript — no external library"
+  format: "TypeScript files with 'as const' (not JSON)"
+  locales: [en, es]
+  default_locale: en
+  routing: "app/[lang]/ — URL-based locale segment"
+  structure_per_module: "src/core/{module}/presentation/i18n/en.ts + es.ts"
+  aggregator: "src/shared/presentation/i18n/get-dictionary.ts — imports all module dicts, exports getDictionary(locale)"
+  passing: "Server component calls getDictionary(locale), passes dict slice as prop to client screen"
+  naming:
+    file: "en.ts / es.ts per module"

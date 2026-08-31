@@ -1,0 +1,219 @@
+/* =============================================================================
+   Design System — Editorial Utility Classes  (Tailwind v4, corrected)
+   Layer 3: @layer components — all classes reference design tokens from
+   theme.css :root. No raw oklch values; no imports allowed here.
+   ============================================================================= */
+
+@layer components {
+
+  /* ── Paper grain texture ───────────────────────────────────────────────── */
+  .paper-grain {
+    background-color:  var(--paper);
+    background-image:  radial-gradient(circle at 1px 1px, oklch(0.70 0.02 80 / 0.25) 1px, transparent 0);
+    background-size:   24px 24px;
+  }
+
+  .paper-grain-dark {
+    background-color:  var(--paper);
+    background-image:  radial-gradient(circle at 1px 1px, oklch(0.30 0.02 80 / 0.45) 1px, transparent 0);
+    background-size:   24px 24px;
+  }
+
+  /* ── Dashed rule divider ───────────────────────────────────────────────── */
+  .dashed-rule {
+    border-top: 1.5px dashed var(--rule);
+  }
+
+  /* ── Placeholder image block ───────────────────────────────────────────── */
+  .placeholder-img {
+    background-color: var(--paper-2);
+    background-image: repeating-linear-gradient(
+      45deg,
+      var(--rule) 0, var(--rule) 1px,
+      transparent 0, transparent 50%
+    );
+    background-size: 10px 10px;
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    font-family:     var(--font-mono);
+    font-size:       0.75rem;
+    color:           var(--ink-3);
+  }
+
+  .placeholder-img.leaf {
+    background-color: var(--forest-bg);
+    background-image: repeating-linear-gradient(
+      45deg,
+      var(--forest-3) 0, var(--forest-3) 1px,
+      transparent 0, transparent 50%
+    );
+    background-size: 10px 10px;
+  }
+
+  /* ── Status dots ───────────────────────────────────────────────────────── */
+  .dot      { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: var(--rule);        }
+  .dot-good { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: var(--forest-2);   }
+  .dot-warn { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: var(--honey);      }
+  .dot-bad  { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: var(--terracotta); }
+
+  /* ── Card ──────────────────────────────────────────────────────────────── */
+  .card {
+    background-color: var(--paper);
+    border:           1px solid var(--rule);
+    border-radius:    6px;
+    box-shadow:
+      0 1px 3px oklch(0.22 0.025 60 / 0.08),
+      0 1px 2px oklch(0.22 0.025 60 / 0.04);
+  }
+
+  /* ── Button reset ──────────────────────────────────────────────────────── */
+  button.btn-reset {
+    appearance:  none;
+    background:  none;
+    border:      none;
+    padding:     0;
+    margin:      0;
+    cursor:      pointer;
+    color:       inherit;
+    font:        inherit;
+    line-height: inherit;
+  }
+
+  /* ── Canvas scroll ─────────────────────────────────────────────────────── */
+  .canvas-scroll {
+    overflow-x:                 auto;
+    overflow-y:                 hidden;
+    scroll-behavior:            smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .canvas-scroll::-webkit-scrollbar        { height: 6px; }
+  .canvas-scroll::-webkit-scrollbar-track  { background: var(--paper-2); }
+  .canvas-scroll::-webkit-scrollbar-thumb  { background-color: var(--rule); border-radius: 3px; }
+
+  /* ── Chips ─────────────────────────────────────────────────────────────── */
+  .chip {
+    display:          inline-flex;
+    align-items:      center;
+    padding:          0.2em 0.6em;
+    border-radius:    999px;
+    font-size:        0.75rem;
+    font-weight:      500;
+    background-color: var(--paper-2);
+    color:            var(--ink-2);
+    border:           1px solid var(--rule);
+    line-height:      1.4;
+  }
+
+  .chip.forest  { background-color: var(--forest-bg); color: var(--forest);     border-color: var(--forest-3);   }
+  .chip.honey   { background-color: var(--honey-bg);  color: var(--honey-2);    border-color: var(--honey);      }
+  .chip.terra   { background-color: var(--terra-bg);  color: var(--terracotta); border-color: var(--terracotta); }
+  .chip.sage    { background-color: var(--sage-bg);   color: var(--forest);     border-color: var(--sage);       }
+  .chip.outline { background-color: transparent;      color: var(--ink-2);      border-color: var(--rule);       }
+
+  /* ── Tabular numbers ───────────────────────────────────────────────────── */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  /* ── Eyebrow label ─────────────────────────────────────────────────────── */
+  .eyebrow {
+    font-family:    var(--font-sans);
+    font-size:      0.6875rem;
+    font-weight:    600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color:          var(--ink-3);
+  }
+
+  /* ── Headline ──────────────────────────────────────────────────────────── */
+  .headline {
+    font-family: var(--font-serif);
+    font-size:   1.5rem;
+    font-weight: 400;
+    line-height: 1.25;
+    color:       var(--ink);
+  }
+
+  /* ── Bullet leaf ───────────────────────────────────────────────────────── */
+  .bullet-leaf::before {
+    content:        "";
+    display:        inline-block;
+    width:          10px;
+    height:         10px;
+    margin-right:   8px;
+    background:     url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'><path d='M5 0.5 C 8 2, 9 5, 5 9 C 1 5, 2 2, 5 0.5 Z M5 1.5 L5 8.5' fill='none' stroke='%23436f4d' stroke-width='1' stroke-linejoin='round'/></svg>") center/contain no-repeat;
+    vertical-align: -1px;
+  }
+
+  /* ── Checkbox ──────────────────────────────────────────────────────────── */
+  .cbox {
+    display:          inline-flex;
+    align-items:      center;
+    justify-content:  center;
+    width:            1.1em;
+    height:           1.1em;
+    border:           1.5px solid var(--rule);
+    border-radius:    3px;
+    background-color: var(--paper);
+    flex-shrink:      0;
+  }
+
+  .cbox.done {
+    background-color: var(--forest);
+    border-color:     var(--forest);
+    position:         relative;
+  }
+
+  .cbox.done::after {
+    content:     "";
+    display:     block;
+    width:       0.35em;
+    height:      0.6em;
+    border:      2px solid var(--white);
+    border-top:  none;
+    border-left: none;
+    transform:   rotate(45deg) translate(-1px, -1px);
+  }
+
+  /* ── Hand-drawn underline ──────────────────────────────────────────────── */
+  .hand-underline {
+    text-decoration-line:  underline;
+    text-decoration-style: wavy;
+    text-decoration-color: var(--honey);
+    text-underline-offset: 3px;
+  }
+
+  /* ── Hand-drawn circle ─────────────────────────────────────────────────── */
+  .hand-circle {
+    outline:        2.5px solid var(--forest-2);
+    outline-offset: 4px;
+    border-radius:  50%;
+  }
+}
+
+/* =============================================================================
+   Animation keyframes — registered as Tailwind v4 @theme utilities
+   ============================================================================= */
+
+@theme {
+  --animate-spin-ring:              spin-ring 0.7s linear infinite;
+  --animate-shimmer:                shimmer 1.4s ease-in-out infinite;
+  --animate-progress-indeterminate: progress-indeterminate 1.2s ease-in-out infinite;
+}
+
+@keyframes spin-ring {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+@keyframes progress-indeterminate {
+  0%   { left: -40%; }
+  100% { left: 100%; }
+}
