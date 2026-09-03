@@ -12,8 +12,10 @@ vi.mock('@/shared/infrastructure/store/session.store', () => ({
 }));
 
 const push = vi.fn();
+let mockSearchParams = new URLSearchParams();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push }),
+  useSearchParams: () => mockSearchParams,
 }));
 
 import { LoginScreen } from './login.screen';
@@ -43,6 +45,7 @@ function make401Error(): AxiosError {
 describe('LoginScreen', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSearchParams = new URLSearchParams();
     vi.mocked(useSessionStore.getState).mockReturnValue({
       accessToken: null,
       setAccessToken: vi.fn(),
@@ -95,6 +98,33 @@ describe('LoginScreen', () => {
       }),
     );
     await waitFor(() => expect(push).toHaveBeenCalledWith('/en'));
+  });
+
+  it('redirects to a valid ?redirectTo= target on success instead of the locale home', async () => {
+    mockSearchParams = new URLSearchParams({ redirectTo: '/en/admin/apps' });
+    vi.mocked(authRestRepository.login).mockResolvedValue({ accessToken: 'access-tok' });
+    const user = userEvent.setup();
+    renderScreen();
+
+    await user.type(screen.getByLabelText(enDict.login.email.label), 'jane@example.com');
+    await user.type(screen.getByLabelText(enDict.login.password.label), 'Sup3rStrongPassw0rd!');
+    await user.click(screen.getByRole('button', { name: enDict.login.submit }));
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/en/admin/apps'));
+  });
+
+  it('falls back to the locale home when ?redirectTo= is an unsafe absolute URL', async () => {
+    mockSearchParams = new URLSearchParams({ redirectTo: 'https://evil.com/phishing' });
+    vi.mocked(authRestRepository.login).mockResolvedValue({ accessToken: 'access-tok' });
+    const user = userEvent.setup();
+    renderScreen();
+
+    await user.type(screen.getByLabelText(enDict.login.email.label), 'jane@example.com');
+    await user.type(screen.getByLabelText(enDict.login.password.label), 'Sup3rStrongPassw0rd!');
+    await user.click(screen.getByRole('button', { name: enDict.login.submit }));
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/en'));
+    expect(push).not.toHaveBeenCalledWith('https://evil.com/phishing');
   });
 
   it('shows an invalid-credentials error on a 401 response and does not redirect', async () => {

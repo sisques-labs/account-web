@@ -17,3 +17,21 @@ export const Default: Story = {
     lang: 'en',
   },
 };
+
+// Rendered as if AdminShell redirected here from a guarded /admin/* route —
+// a successful login should send the visitor back to `redirectTo` instead
+// of the locale home.
+export const WithRedirectTarget: Story = {
+  args: {
+    dict: enDict,
+    lang: 'en',
+  },
+  parameters: {
+    nextjs: {
+      navigation: {
+        pathname: '/en/login',
+        query: { redirectTo: '/en/admin/apps' },
+      },
+    },
+  },
+};

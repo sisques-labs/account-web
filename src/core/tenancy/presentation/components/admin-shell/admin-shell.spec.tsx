@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
+const replace = vi.fn();
+
 vi.mock('next/navigation', () => ({
   usePathname: () => mockPathname,
+  useRouter: () => ({ replace }),
 }));
 
 let mockPathname = '/en/admin/apps';
@@ -23,11 +26,25 @@ function makeToken(platformAdmin: boolean): string {
 
 describe('AdminShell', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     useSessionStore.setState({ accessToken: null });
     mockPathname = '/en/admin/apps';
   });
 
-  it('shows the unauthorized message when the user is not a platform admin', () => {
+  it('redirects to login with a redirectTo param when there is no session', () => {
+    render(
+      <AdminShell lang="en" dict={enDict}>
+        <div>content</div>
+      </AdminShell>,
+    );
+
+    expect(replace).toHaveBeenCalledWith('/en/login?redirectTo=%2Fen%2Fadmin%2Fapps');
+    expect(screen.queryByText('content')).not.toBeInTheDocument();
+    expect(screen.queryByText(enDict.admin.unauthorized.title)).not.toBeInTheDocument();
+  });
+
+  it('shows the unauthorized message for a signed-in non-admin, without redirecting', () => {
+    useSessionStore.setState({ accessToken: makeToken(false) });
     render(
       <AdminShell lang="en" dict={enDict}>
         <div>content</div>
@@ -36,6 +53,7 @@ describe('AdminShell', () => {
 
     expect(screen.getByText(enDict.admin.unauthorized.title)).toBeInTheDocument();
     expect(screen.queryByText('content')).not.toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
   });
 
   it('renders the sidebar and children for a platform admin', () => {
@@ -48,6 +66,7 @@ describe('AdminShell', () => {
 
     expect(screen.getByText('content')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: enDict.admin.nav.apps })).toHaveAttribute('aria-current', 'page');
+    expect(replace).not.toHaveBeenCalled();
   });
 
   it('marks the users section active when on /admin/users', () => {

@@ -1,8 +1,10 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { AdminSidebar, type AdminSection } from '@/core/tenancy/presentation/components/admin-sidebar/admin-sidebar';
 import { useIsPlatformAdmin } from '@/core/auth/presentation/hooks/use-is-platform-admin/useIsPlatformAdmin.hook';
+import { useSessionStore } from '@/shared/infrastructure/store/session.store';
 import type { Locale } from '@/shared/presentation/i18n/locale';
 import type { TenancyDict } from '@/core/tenancy/presentation/i18n/en';
 import type { WidenStringLiterals } from '@/shared/presentation/i18n/widen-literals';
@@ -20,9 +22,26 @@ function resolveActiveSection(pathname: string): AdminSection {
 }
 
 function AdminShell({ lang, dict, children }: AdminShellProps) {
+  const hasSession = useSessionStore((state) => state.accessToken !== null);
   const isPlatformAdmin = useIsPlatformAdmin();
   const pathname = usePathname();
+  const router = useRouter();
   const active = resolveActiveSection(pathname ?? '');
+
+  // No session at all: redirect to login rather than showing "unauthorized"
+  // — the visitor hasn't had a chance to authenticate yet. Carry the admin
+  // path along as `redirectTo` so LoginScreen can send them back here after
+  // a successful login. A signed-in non-admin, by contrast, gets the
+  // "unauthorized" state below — logging in again wouldn't grant them access.
+  useEffect(() => {
+    if (hasSession) return;
+    const redirectTo = pathname ? `?redirectTo=${encodeURIComponent(pathname)}` : '';
+    router.replace(`/${lang}/login${redirectTo}`);
+  }, [hasSession, pathname, lang, router]);
+
+  if (!hasSession) {
+    return null;
+  }
 
   if (!isPlatformAdmin) {
     return (
