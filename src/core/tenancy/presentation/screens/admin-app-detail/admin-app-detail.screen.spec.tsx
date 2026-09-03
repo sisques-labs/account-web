@@ -14,6 +14,7 @@ vi.mock('@/core/tenancy/infrastructure/repositories/graphql/tenancy.gql.reposito
 }));
 
 import { AdminAppDetailScreen } from './admin-app-detail.screen';
+import { AdminTopBarActionsHost } from '@/core/tenancy/presentation/components/admin-shell/admin-shell';
 import { tenancyGqlRepository } from '@/core/tenancy/infrastructure/repositories/graphql/tenancy.gql.repository';
 import enDict from '@/core/tenancy/presentation/i18n/en';
 
@@ -25,11 +26,16 @@ const APPS = {
   totalPages: 1,
 };
 
+// AdminAppDetailScreen injects "Crear tenant" into AdminShell's shared top
+// bar via useAdminTopBarActions() — AdminTopBarActionsHost stands in for
+// that slot so the button still mounts in this screen-only test.
 function renderScreen(appSlug = 'gardenia') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <AdminAppDetailScreen dict={enDict} appSlug={appSlug} />
+      <AdminTopBarActionsHost>
+        <AdminAppDetailScreen dict={enDict} appSlug={appSlug} />
+      </AdminTopBarActionsHost>
     </QueryClientProvider>,
   );
 }

@@ -32,6 +32,19 @@ describe('TenancyGqlRepository', () => {
     expect(result.items).toEqual(items);
   });
 
+  it('createApp mutates and returns the created id from the ack', async () => {
+    vi.mocked(apolloClient.mutate).mockResolvedValue({
+      data: { appCreate: { success: true, message: 'ok', id: 'app-1' } },
+    } as never);
+
+    const result = await repository.createApp({ name: 'Gardenia' });
+
+    expect(apolloClient.mutate).toHaveBeenCalledWith(
+      expect.objectContaining({ variables: { input: { name: 'Gardenia' } } }),
+    );
+    expect(result).toEqual({ id: 'app-1' });
+  });
+
   it('listTenantsByApp filters by appId', async () => {
     vi.mocked(apolloClient.query).mockResolvedValue({
       data: { tenantsFindByCriteria: { items: [], total: 0, page: 1, perPage: 50, totalPages: 0 } },

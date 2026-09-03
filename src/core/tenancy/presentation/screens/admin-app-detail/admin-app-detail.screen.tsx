@@ -10,6 +10,7 @@ import { useApps } from '@/core/tenancy/presentation/hooks/use-apps/useApps.hook
 import { useTenantsByApp } from '@/core/tenancy/presentation/hooks/use-tenants-by-app/useTenantsByApp.hook';
 import { CreateTenantDialog } from '@/core/tenancy/presentation/components/create-tenant-dialog/create-tenant-dialog';
 import { TenantMembersDialog } from '@/core/tenancy/presentation/components/tenant-members-dialog/tenant-members-dialog';
+import { useAdminTopBarActions } from '@/core/tenancy/presentation/components/admin-shell/admin-shell';
 import type { Tenant } from '@/core/tenancy/domain/interfaces/tenant.interface';
 import type { TenancyDict } from '@/core/tenancy/presentation/i18n/en';
 import type { WidenStringLiterals } from '@/shared/presentation/i18n/widen-literals';
@@ -32,14 +33,18 @@ function AdminAppDetailScreen({ dict, appSlug }: AdminAppDetailScreenProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const [membersTenant, setMembersTenant] = useState<Tenant | null>(null);
 
+  // "Crear tenant" lives in AdminShell's shared top bar, next to the
+  // section title, rather than duplicated inside the page body.
+  useAdminTopBarActions(
+    app ? <Button onClick={() => setCreateOpen(true)}>{dict.appDetail.createTenant}</Button> : null,
+  );
+
   return (
-    <div className="flex max-w-[1000px] flex-col gap-5">
-      <div className="flex items-center justify-between">
-        <h1 className="headline text-2xl">{app?.name ?? appSlug}</h1>
-        {app && (
-          <Button onClick={() => setCreateOpen(true)}>{dict.appDetail.createTenant}</Button>
-        )}
-      </div>
+    <div className="flex w-full flex-col gap-5">
+      {/* This title shows the specific app's name — genuinely different
+          information from AdminShell's generic "Apps del ecosistema"
+          section label in the top bar, so it isn't a duplicate. */}
+      <h1 className="headline text-2xl">{app?.name ?? appSlug}</h1>
 
       {(appsQuery.isLoading || (app && tenantsQuery.isLoading)) && (
         <div className="flex flex-col gap-2">

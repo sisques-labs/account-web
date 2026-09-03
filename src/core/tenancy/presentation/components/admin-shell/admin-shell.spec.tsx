@@ -10,9 +10,14 @@ vi.mock('next/navigation', () => ({
 
 let mockPathname = '/en/admin/apps';
 
-import { AdminShell } from './admin-shell';
+import { AdminShell, useAdminTopBarActions } from './admin-shell';
 import { useSessionStore } from '@/shared/infrastructure/store/session.store';
 import enDict from '@/core/tenancy/presentation/i18n/en';
+
+function ChildWithTopBarAction() {
+  useAdminTopBarActions(<button type="button">Crear app</button>);
+  return <div>content</div>;
+}
 
 function base64UrlEncode(json: object): string {
   return btoa(JSON.stringify(json)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -67,6 +72,17 @@ describe('AdminShell', () => {
     expect(screen.getByText('content')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: enDict.admin.nav.apps })).toHaveAttribute('aria-current', 'page');
     expect(replace).not.toHaveBeenCalled();
+  });
+
+  it('renders a child action injected via useAdminTopBarActions in the shared top bar', () => {
+    useSessionStore.setState({ accessToken: makeToken(true) });
+    render(
+      <AdminShell lang="en" dict={enDict}>
+        <ChildWithTopBarAction />
+      </AdminShell>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Crear app' })).toBeInTheDocument();
   });
 
   it('marks the users section active when on /admin/users', () => {

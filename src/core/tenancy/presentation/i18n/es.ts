@@ -15,6 +15,7 @@ const dict = {
   },
   apps: {
     title: 'Apps del ecosistema',
+    createApp: 'Crear app',
     connected: 'Conectada',
     tenantsLabel: 'tenants',
     usersLabel: 'usuarios',
@@ -40,6 +41,14 @@ const dict = {
       description: 'Los tenants creados para esta app aparecerán aquí.',
     },
     error: 'No se han podido cargar los tenants. Inténtalo de nuevo.',
+  },
+  createAppDialog: {
+    title: 'Nueva app',
+    description: 'Registra una nueva app en el ecosistema de Sisqués Labs.',
+    name: { label: 'Nombre de la app', placeholder: 'Ej. Gardenia' },
+    submit: 'Crear app',
+    submitting: 'Creando app…',
+    errors: { generic: 'Algo ha salido mal. Inténtalo de nuevo.' },
   },
   createTenantDialog: {
     title: 'Nuevo tenant',

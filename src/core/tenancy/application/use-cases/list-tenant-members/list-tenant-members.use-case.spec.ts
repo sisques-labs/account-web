@@ -5,6 +5,7 @@ import type { ITenancyRepository } from '@/core/tenancy/application/ports/tenanc
 function makeRepository(overrides: Partial<ITenancyRepository> = {}): ITenancyRepository {
   return {
     listApps: vi.fn(),
+    createApp: vi.fn(),
     listTenantsByApp: vi.fn(),
     listTenantMembers: vi.fn(),
     createTenant: vi.fn(),

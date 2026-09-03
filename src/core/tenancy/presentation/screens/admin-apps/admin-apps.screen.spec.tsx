@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 vi.mock('@/core/tenancy/infrastructure/repositories/graphql/tenancy.gql.repository', () => ({
   tenancyGqlRepository: {
     listApps: vi.fn(),
+    createApp: vi.fn(),
     listTenantsByApp: vi.fn(),
     listTenantMembers: vi.fn(),
     createTenant: vi.fn(),
@@ -13,14 +15,21 @@ vi.mock('@/core/tenancy/infrastructure/repositories/graphql/tenancy.gql.reposito
 }));
 
 import { AdminAppsScreen } from './admin-apps.screen';
+import { AdminTopBarActionsHost } from '@/core/tenancy/presentation/components/admin-shell/admin-shell';
 import { tenancyGqlRepository } from '@/core/tenancy/infrastructure/repositories/graphql/tenancy.gql.repository';
 import enDict from '@/core/tenancy/presentation/i18n/en';
 
+// AdminAppsScreen injects its "Crear app" action into AdminShell's shared
+// top bar via useAdminTopBarActions() rather than rendering it inline —
+// AdminTopBarActionsHost stands in for that slot so the button still
+// mounts in this screen-only test.
 function renderScreen() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <AdminAppsScreen dict={enDict} lang="en" />
+      <AdminTopBarActionsHost>
+        <AdminAppsScreen dict={enDict} lang="en" />
+      </AdminTopBarActionsHost>
     </QueryClientProvider>,
   );
 }
@@ -65,5 +74,43 @@ describe('AdminAppsScreen', () => {
     renderScreen();
 
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(enDict.apps.error));
+  });
+
+  it('opens the create-app dialog from the header action', async () => {
+    vi.mocked(tenancyGqlRepository.listApps).mockResolvedValue({
+      items: [],
+      total: 0,
+      page: 1,
+      perPage: 50,
+      totalPages: 0,
+    });
+    const user = userEvent.setup();
+    renderScreen();
+
+    await screen.findByText(enDict.apps.empty.title);
+    await user.click(screen.getByRole('button', { name: enDict.apps.createApp }));
+
+    expect(screen.getByText(enDict.createAppDialog.title)).toBeInTheDocument();
+  });
+
+  it('creates an app and refreshes the apps list', async () => {
+    vi.mocked(tenancyGqlRepository.listApps).mockResolvedValue({
+      items: [],
+      total: 0,
+      page: 1,
+      perPage: 50,
+      totalPages: 0,
+    });
+    vi.mocked(tenancyGqlRepository.createApp).mockResolvedValue({ id: 'app-1' });
+    const user = userEvent.setup();
+    renderScreen();
+
+    await screen.findByText(enDict.apps.empty.title);
+    await user.click(screen.getByRole('button', { name: enDict.apps.createApp }));
+    await user.type(screen.getByLabelText(enDict.createAppDialog.name.label), 'Gardenia');
+    await user.click(screen.getByRole('button', { name: enDict.createAppDialog.submit }));
+
+    await waitFor(() => expect(tenancyGqlRepository.createApp).toHaveBeenCalledWith({ name: 'Gardenia' }));
+    await waitFor(() => expect(tenancyGqlRepository.listApps).toHaveBeenCalledTimes(2));
   });
 });

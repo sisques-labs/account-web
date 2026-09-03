@@ -3,6 +3,7 @@ import { ITenancyRepository, Pagination } from '@/core/tenancy/application/ports
 import { App } from '@/core/tenancy/domain/interfaces/app.interface';
 import { Tenant } from '@/core/tenancy/domain/interfaces/tenant.interface';
 import { TenantMembership } from '@/core/tenancy/domain/interfaces/tenant-membership.interface';
+import { CreateAppInput } from '@/core/tenancy/application/interfaces/create-app-input.interface';
 import { CreateTenantInput } from '@/core/tenancy/application/interfaces/create-tenant-input.interface';
 import { AddTenantMemberInput } from '@/core/tenancy/application/interfaces/add-tenant-member-input.interface';
 import { TenantQueryableField } from '@/core/tenancy/domain/enums/tenant-queryable-field.enum';
@@ -12,6 +13,7 @@ import { FilterOperator } from '@/shared/domain/enums/filter-operator.enum';
 import { APPS_FIND_BY_CRITERIA } from './queries/apps-find-by-criteria.query';
 import { TENANTS_FIND_BY_CRITERIA } from './queries/tenants-find-by-criteria.query';
 import { TENANT_MEMBERSHIPS_FIND_BY_TENANT_ID } from './queries/tenant-memberships-find-by-tenant-id.query';
+import { APP_CREATE } from './mutations/app-create.mutation';
 import { TENANT_CREATE } from './mutations/tenant-create.mutation';
 import { TENANT_MEMBER_ADD } from './mutations/tenant-member-add.mutation';
 
@@ -43,6 +45,14 @@ export class TenancyGqlRepository implements ITenancyRepository {
       fetchPolicy: 'network-only',
     });
     return data!.appsFindByCriteria;
+  }
+
+  async createApp(input: CreateAppInput): Promise<CreatedEntity> {
+    const { data } = await apolloClient.mutate<{ appCreate: MutationAck }>({
+      mutation: APP_CREATE,
+      variables: { input },
+    });
+    return { id: data?.appCreate.id ?? '' };
   }
 
   async listTenantsByApp(appId: string, pagination: Pagination = DEFAULT_PAGINATION): Promise<PaginatedResult<Tenant>> {

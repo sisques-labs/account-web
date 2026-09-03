@@ -9,8 +9,7 @@ export interface AdminUsersScreenProps {
 
 function AdminUsersScreen({ dict }: AdminUsersScreenProps) {
   return (
-    <div className="flex max-w-[1000px] flex-col gap-5">
-      <h1 className="headline text-2xl">{dict.users.title}</h1>
+    <div className="flex w-full flex-col gap-5">
       <Card className="overflow-hidden">
         <div className="grid grid-cols-[2.4fr_1fr_1fr_1fr] gap-3 border-b border-[var(--rule)] px-4 pb-3 pt-4 eyebrow">
           <div>{dict.users.columns.user}</div>

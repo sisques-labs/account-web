@@ -1,14 +1,19 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { AdminAppDetailScreen } from './admin-app-detail.screen';
+import { AdminTopBarActionsHost } from '@/core/tenancy/presentation/components/admin-shell/admin-shell';
 import enDict from '@/core/tenancy/presentation/i18n/en';
 import { withQueryClient } from '../../../../../../.storybook/decorators/with-query-client';
 import { appsQueryKey } from '@/core/tenancy/presentation/hooks/use-apps/useApps.hook';
 import { tenantsByAppQueryKey } from '@/core/tenancy/presentation/hooks/use-tenants-by-app/useTenantsByApp.hook';
 
+// The screen injects "Crear tenant" into AdminShell's shared top bar via
+// useAdminTopBarActions() — AdminTopBarActionsHost renders a stand-in for
+// that slot above the screen so the story shows the button in context.
 const meta = {
   title: 'Tenancy/Screens/AdminAppDetail',
   component: AdminAppDetailScreen,
   tags: ['autodocs'],
+  decorators: [(Story) => <AdminTopBarActionsHost><Story /></AdminTopBarActionsHost>],
 } satisfies Meta<typeof AdminAppDetailScreen>;
 
 export default meta;
