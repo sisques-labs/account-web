@@ -60,6 +60,18 @@ application-layer code touches store state only through `getState()`.
 This context has no store of its own — there's no richer session data to
 keep yet.
 
+## Platform-admin gating (`decodeAccessTokenClaims` / `useIsPlatformAdmin`)
+
+`domain/interfaces/access-token-claims.interface.ts` mirrors `account-api`'s
+`IAccessTokenClaims` JWT payload (`{ sub, email, platformAdmin, tenants }`).
+`domain/services/decode-access-token.service.ts` is a pure, framework-free,
+**unverified** base64 JWT-payload decoder — client-side only, for UI gating
+(e.g. showing/hiding `/admin`). No security property depends on it: every
+guarded operation is re-checked server-side by `account-api`'s own
+`JwtAuthGuard`/`PlatformAdminGuard`. `presentation/hooks/use-is-platform-admin/`
+wraps it as a reactive `useIsPlatformAdmin()` selector over the shared
+session store, consumed by `tenancy`'s `AdminShell`.
+
 ## No provider, no skeletons
 
 This context adds no `auth.providers.tsx` (no context-scoped React

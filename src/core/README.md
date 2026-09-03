@@ -2,6 +2,10 @@
 
 `auth` (`src/core/auth/`) is the first bounded context and the canonical
 example for every one after it — see [`src/core/auth/README.md`](./auth/README.md).
+`tenancy` (`src/core/tenancy/`) is the first GraphQL-backed context — see
+[`src/core/tenancy/README.md`](./tenancy/README.md) for its transport
+decision and the deviations it was forced into by the real `account-api`
+contracts.
 See `AGENTS.md` and `.claude/skills/architecture/SKILL.md` for the full
 layer rules and naming conventions.
 
