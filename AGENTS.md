@@ -8,7 +8,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-# AGENTS.md — nextjs-template
+# AGENTS.md — account-web
 
 Sisques Labs Next.js frontend template — DDD + Hexagonal (Screaming
 Architecture). This repository ships with the cross-cutting infrastructure
