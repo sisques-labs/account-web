@@ -1,8 +1,5 @@
 name: Release Train
 
-# TODO(rename-project): update image_name / ghcr_image_name below once this
-# template becomes a real frontend.
-
 on:
   push:
     branches: [develop, staging, main]
@@ -22,8 +19,8 @@ jobs:
   release:
     uses: sisques-labs/workflows/.github/workflows/release-train.yml@main
     with:
-      image_name: sisqueslabs/nextjs-template
-      ghcr_image_name: ghcr.io/sisques-labs/nextjs-template
+      image_name: sisqueslabs/account-web
+      ghcr_image_name: ghcr.io/sisques-labs/account-web
       push_ghcr: true
       node_version: "24"
       run_lint: true
