@@ -81,7 +81,7 @@ conventions:
       - ports/ — repository interfaces
       - interfaces/ — application-level input/output interfaces (e.g. use-case input DTOs)
       - Use-case classes take repository via constructor; exported as module singletons
-      - Class name: {Name}UseCase. File name: {name}.use-case.ts
+      - "Class name: {Name}UseCase. File name: {name}.use-case.ts"
       - No framework imports (no React, no Zustand direct) — reads/writes store via getState()
     infrastructure:
       - repositories/graphql/ — Apollo GQL implementations of ports (current standard)
