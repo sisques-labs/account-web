@@ -3,20 +3,16 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 
-vi.mock('@/core/tenancy/infrastructure/repositories/graphql/tenancy.gql.repository', () => ({
-  tenancyGqlRepository: {
+vi.mock('@/core/app/infrastructure/repositories/graphql/app.gql.repository', () => ({
+  appGqlRepository: {
     listApps: vi.fn(),
     createApp: vi.fn(),
-    listTenantsByApp: vi.fn(),
-    listTenantMembers: vi.fn(),
-    createTenant: vi.fn(),
-    addTenantMember: vi.fn(),
   },
 }));
 
 import { useCreateApp } from './useCreateApp.hook';
-import { tenancyGqlRepository } from '@/core/tenancy/infrastructure/repositories/graphql/tenancy.gql.repository';
-import { appsQueryKey } from '@/core/tenancy/presentation/hooks/use-apps/useApps.hook';
+import { appGqlRepository } from '@/core/app/infrastructure/repositories/graphql/app.gql.repository';
+import { appsQueryKey } from '@/core/app/presentation/hooks/use-apps/useApps.hook';
 
 describe('useCreateApp', () => {
   beforeEach(() => {
@@ -24,7 +20,7 @@ describe('useCreateApp', () => {
   });
 
   it('creates an app and invalidates the apps query', async () => {
-    vi.mocked(tenancyGqlRepository.createApp).mockResolvedValue({ id: 'app-1' });
+    vi.mocked(appGqlRepository.createApp).mockResolvedValue({ id: 'app-1' });
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
     function wrapper({ children }: { children: ReactNode }) {

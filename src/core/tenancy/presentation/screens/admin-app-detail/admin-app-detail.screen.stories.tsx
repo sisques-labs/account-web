@@ -3,7 +3,7 @@ import { AdminAppDetailScreen } from './admin-app-detail.screen';
 import { AdminTopBarActionsHost } from '@/core/tenancy/presentation/components/admin-shell/admin-shell';
 import enDict from '@/core/tenancy/presentation/i18n/en';
 import { withQueryClient } from '../../../../../../.storybook/decorators/with-query-client';
-import { appsQueryKey } from '@/core/tenancy/presentation/hooks/use-apps/useApps.hook';
+import { appsQueryKey } from '@/core/app/presentation/hooks/use-apps/useApps.hook';
 import { tenantsByAppQueryKey } from '@/core/tenancy/presentation/hooks/use-tenants-by-app/useTenantsByApp.hook';
 
 // The screen injects "Crear tenant" into AdminShell's shared top bar via

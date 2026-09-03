@@ -13,20 +13,6 @@ const dict = {
       description: 'No tienes acceso de administrador de plataforma a esta sección.',
     },
   },
-  apps: {
-    title: 'Apps del ecosistema',
-    createApp: 'Crear app',
-    connected: 'Conectada',
-    tenantsLabel: 'tenants',
-    usersLabel: 'usuarios',
-    viewTenants: 'Ver tenants →',
-    loading: 'Cargando apps…',
-    empty: {
-      title: 'Todavía no hay apps',
-      description: 'Las apps creadas en account-api aparecerán aquí.',
-    },
-    error: 'No se han podido cargar las apps. Inténtalo de nuevo.',
-  },
   appDetail: {
     columns: {
       tenant: 'Tenant',
@@ -41,14 +27,6 @@ const dict = {
       description: 'Los tenants creados para esta app aparecerán aquí.',
     },
     error: 'No se han podido cargar los tenants. Inténtalo de nuevo.',
-  },
-  createAppDialog: {
-    title: 'Nueva app',
-    description: 'Registra una nueva app en el ecosistema de Sisqués Labs.',
-    name: { label: 'Nombre de la app', placeholder: 'Ej. Gardenia' },
-    submit: 'Crear app',
-    submitting: 'Creando app…',
-    errors: { generic: 'Algo ha salido mal. Inténtalo de nuevo.' },
   },
   createTenantDialog: {
     title: 'Nuevo tenant',

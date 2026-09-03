@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { useState } from 'react';
 import { CreateAppDialog } from './create-app-dialog';
-import enDict from '@/core/tenancy/presentation/i18n/en';
+import enDict from '@/core/app/presentation/i18n/en';
 
 const meta = {
-  title: 'Tenancy/CreateAppDialog',
+  title: 'App/CreateAppDialog',
   component: CreateAppDialog,
   tags: ['autodocs'],
 } satisfies Meta<typeof CreateAppDialog>;

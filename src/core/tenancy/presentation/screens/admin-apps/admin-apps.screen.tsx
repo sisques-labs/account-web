@@ -9,15 +9,15 @@ import { buttonVariants } from '@/shared/presentation/components/ui/button/butto
 import { Skeleton } from '@/shared/presentation/components/ui/skeleton/skeleton';
 import { Alert } from '@/shared/presentation/components/ui/alert/alert';
 import { EmptyState } from '@/shared/presentation/components/ui/empty-state/empty-state';
-import { useApps } from '@/core/tenancy/presentation/hooks/use-apps/useApps.hook';
-import { CreateAppDialog } from '@/core/tenancy/presentation/components/create-app-dialog/create-app-dialog';
+import { useApps } from '@/core/app/presentation/hooks/use-apps/useApps.hook';
+import { CreateAppDialog } from '@/core/app/presentation/components/create-app-dialog/create-app-dialog';
 import { useAdminTopBarActions } from '@/core/tenancy/presentation/components/admin-shell/admin-shell';
 import type { Locale } from '@/shared/presentation/i18n/locale';
-import type { TenancyDict } from '@/core/tenancy/presentation/i18n/en';
+import type { AppDict } from '@/core/app/presentation/i18n/en';
 import type { WidenStringLiterals } from '@/shared/presentation/i18n/widen-literals';
 
 export interface AdminAppsScreenProps {
-  dict: WidenStringLiterals<TenancyDict>;
+  dict: WidenStringLiterals<AppDict>;
   lang: Locale;
 }
 

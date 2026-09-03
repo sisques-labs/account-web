@@ -5,8 +5,6 @@ import { TenantRole } from '@/core/tenancy/domain/enums/tenant-role.enum';
 
 function makeRepository(overrides: Partial<ITenancyRepository> = {}): ITenancyRepository {
   return {
-    listApps: vi.fn(),
-    createApp: vi.fn(),
     listTenantsByApp: vi.fn(),
     listTenantMembers: vi.fn(),
     createTenant: vi.fn(),

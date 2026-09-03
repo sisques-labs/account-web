@@ -2,12 +2,20 @@
 
 ## Scope
 
-Platform-admin views over `account-api`'s `app`/`tenancy` GraphQL contexts:
-listing ecosystem apps, listing/creating tenants for an app, and
-listing/adding tenant members. Backs the `/admin/apps` and
-`/admin/apps/[appSlug]` screens. `/admin/users` and `/admin/invites` are
-static, UI-only placeholders (no backend exists for either — see below) and
-have no use-cases/repository calls of their own.
+Platform-admin views over `account-api`'s `tenancy` GraphQL context:
+listing/creating tenants for an app, and listing/adding tenant members.
+Backs the tenant table on the `/admin/apps/[appSlug]` screen. `/admin/users`
+and `/admin/invites` are static, UI-only placeholders (no backend exists for
+either — see below) and have no use-cases/repository calls of their own.
+
+The **App** aggregate (ecosystem apps — listing them, creating one, the
+`/admin/apps` screen's cards and "Create app" dialog) lives in its own
+`core/app/` context, not here — see `core/app/README.md` for why and for
+how the two contexts' data meet only at the presentation layer.
+`tenancy`'s own use-cases (`CreateTenantUseCase`, `ListTenantsByAppUseCase`)
+only ever take an `appId: string`, never an app's name/slug, so this
+context has no port/adapter into `app` — there is nothing for its
+application layer to look up.
 
 ## Transport decision: GraphQL
 
@@ -15,7 +23,7 @@ have no use-cases/repository calls of their own.
 `tenantsFindByCriteria`, guarded by `PlatformAdminGuard` and filterable by
 `appId` — i.e. a genuine platform-admin-scoped "list tenants" query, not
 scoped to the caller's own memberships. Since GraphQL already covers every
-read/write this context needs (`appsFindByCriteria`, `tenantsFindByCriteria`,
+read/write this context needs (`tenantsFindByCriteria`,
 `tenantMembershipsFindByTenantId`, `tenantCreate`, `tenantMemberAdd`), this
 context uses GraphQL exclusively, per the repo's documented "current
 standard" for new contexts (`openspec/config.yaml` →
@@ -47,10 +55,6 @@ for any part of this module.
   `tenantMemberAdd` can fail (e.g. email not found) but the failure isn't
   surfaced as a documented, stable GraphQL error code today, so the UI
   doesn't attempt to special-case it.
-- **App cards show no tenant/user counts.** `AppResponseDto` doesn't return
-  them; the canvas's `app.tenantsCount`/`app.usersCount` badges are
-  dropped rather than fabricated or computed via N+1 fetches.
-
 ## `/admin/users` and `/admin/invites`
 
 Confirmed via `account-api` source: the `user` context has no
@@ -72,7 +76,13 @@ TanStack Query providers already wired in `shared/`.
 The `useIsPlatformAdmin()` hook (and the underlying, framework-free
 `decodeAccessTokenClaims()` service) live in `core/auth/` rather than here,
 since they're about interpreting the shared session token — see
-`core/auth/README.md`. `AdminShell` (this context's
-`presentation/components/admin-shell/`) uses that hook to gate the whole
-`/admin` route tree, rendering an "unauthorized" state instead of the
-sidebar/content when the current session isn't a platform admin.
+`core/auth/README.md`. This context's own
+`presentation/hooks/use-admin-guard/useAdminGuard.hook.ts` composes that
+hook with the session store's bootstrap state and the current pathname to
+gate the whole `/admin` route tree: it redirects an unauthenticated visitor
+to `/login` (once the app-wide session bootstrap has had its one silent
+chance to restore a session — see `useSessionBootstrap`), reports
+`unauthorized` for a signed-in non-admin, and resolves which admin section
+the current pathname maps to. `AdminShell` (this context's
+`presentation/components/admin-shell/`) is pure JSX driven by that hook's
+`{ status, active }` output — it holds no auth-guard logic of its own.

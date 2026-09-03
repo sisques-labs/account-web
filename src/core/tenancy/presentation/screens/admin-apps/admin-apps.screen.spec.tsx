@@ -3,21 +3,17 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-vi.mock('@/core/tenancy/infrastructure/repositories/graphql/tenancy.gql.repository', () => ({
-  tenancyGqlRepository: {
+vi.mock('@/core/app/infrastructure/repositories/graphql/app.gql.repository', () => ({
+  appGqlRepository: {
     listApps: vi.fn(),
     createApp: vi.fn(),
-    listTenantsByApp: vi.fn(),
-    listTenantMembers: vi.fn(),
-    createTenant: vi.fn(),
-    addTenantMember: vi.fn(),
   },
 }));
 
 import { AdminAppsScreen } from './admin-apps.screen';
 import { AdminTopBarActionsHost } from '@/core/tenancy/presentation/components/admin-shell/admin-shell';
-import { tenancyGqlRepository } from '@/core/tenancy/infrastructure/repositories/graphql/tenancy.gql.repository';
-import enDict from '@/core/tenancy/presentation/i18n/en';
+import { appGqlRepository } from '@/core/app/infrastructure/repositories/graphql/app.gql.repository';
+import enDict from '@/core/app/presentation/i18n/en';
 
 // AdminAppsScreen injects its "Crear app" action into AdminShell's shared
 // top bar via useAdminTopBarActions() rather than rendering it inline —
@@ -40,7 +36,7 @@ describe('AdminAppsScreen', () => {
   });
 
   it('renders each app with a link to its detail page', async () => {
-    vi.mocked(tenancyGqlRepository.listApps).mockResolvedValue({
+    vi.mocked(appGqlRepository.listApps).mockResolvedValue({
       items: [{ id: 'a1', slug: 'gardenia', name: 'Gardenia', createdAt: '', updatedAt: '' }],
       total: 1,
       page: 1,
@@ -57,7 +53,7 @@ describe('AdminAppsScreen', () => {
   });
 
   it('shows an empty state when there are no apps', async () => {
-    vi.mocked(tenancyGqlRepository.listApps).mockResolvedValue({
+    vi.mocked(appGqlRepository.listApps).mockResolvedValue({
       items: [],
       total: 0,
       page: 1,
@@ -70,14 +66,14 @@ describe('AdminAppsScreen', () => {
   });
 
   it('shows an error alert when the query fails', async () => {
-    vi.mocked(tenancyGqlRepository.listApps).mockRejectedValue(new Error('boom'));
+    vi.mocked(appGqlRepository.listApps).mockRejectedValue(new Error('boom'));
     renderScreen();
 
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(enDict.apps.error));
   });
 
   it('opens the create-app dialog from the header action', async () => {
-    vi.mocked(tenancyGqlRepository.listApps).mockResolvedValue({
+    vi.mocked(appGqlRepository.listApps).mockResolvedValue({
       items: [],
       total: 0,
       page: 1,
@@ -94,14 +90,14 @@ describe('AdminAppsScreen', () => {
   });
 
   it('creates an app and refreshes the apps list', async () => {
-    vi.mocked(tenancyGqlRepository.listApps).mockResolvedValue({
+    vi.mocked(appGqlRepository.listApps).mockResolvedValue({
       items: [],
       total: 0,
       page: 1,
       perPage: 50,
       totalPages: 0,
     });
-    vi.mocked(tenancyGqlRepository.createApp).mockResolvedValue({ id: 'app-1' });
+    vi.mocked(appGqlRepository.createApp).mockResolvedValue({ id: 'app-1' });
     const user = userEvent.setup();
     renderScreen();
 
@@ -110,7 +106,7 @@ describe('AdminAppsScreen', () => {
     await user.type(screen.getByLabelText(enDict.createAppDialog.name.label), 'Gardenia');
     await user.click(screen.getByRole('button', { name: enDict.createAppDialog.submit }));
 
-    await waitFor(() => expect(tenancyGqlRepository.createApp).toHaveBeenCalledWith({ name: 'Gardenia' }));
-    await waitFor(() => expect(tenancyGqlRepository.listApps).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(appGqlRepository.createApp).toHaveBeenCalledWith({ name: 'Gardenia' }));
+    await waitFor(() => expect(appGqlRepository.listApps).toHaveBeenCalledTimes(2));
   });
 });

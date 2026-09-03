@@ -6,11 +6,12 @@ import { Button } from '@/shared/presentation/components/ui/button/button';
 import { Skeleton } from '@/shared/presentation/components/ui/skeleton/skeleton';
 import { Alert } from '@/shared/presentation/components/ui/alert/alert';
 import { EmptyState } from '@/shared/presentation/components/ui/empty-state/empty-state';
-import { useApps } from '@/core/tenancy/presentation/hooks/use-apps/useApps.hook';
+import { useAppBySlug } from '@/core/app/presentation/hooks/use-app-by-slug/useAppBySlug.hook';
 import { useTenantsByApp } from '@/core/tenancy/presentation/hooks/use-tenants-by-app/useTenantsByApp.hook';
 import { CreateTenantDialog } from '@/core/tenancy/presentation/components/create-tenant-dialog/create-tenant-dialog';
 import { TenantMembersDialog } from '@/core/tenancy/presentation/components/tenant-members-dialog/tenant-members-dialog';
 import { useAdminTopBarActions } from '@/core/tenancy/presentation/components/admin-shell/admin-shell';
+import { formatDate } from '@/shared/lib/format-date';
 import type { Tenant } from '@/core/tenancy/domain/interfaces/tenant.interface';
 import type { TenancyDict } from '@/core/tenancy/presentation/i18n/en';
 import type { WidenStringLiterals } from '@/shared/presentation/i18n/widen-literals';
@@ -20,14 +21,9 @@ export interface AdminAppDetailScreenProps {
   appSlug: string;
 }
 
-function formatDate(iso: string): string {
-  const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? iso : date.toLocaleDateString();
-}
-
 function AdminAppDetailScreen({ dict, appSlug }: AdminAppDetailScreenProps) {
-  const appsQuery = useApps();
-  const app = appsQuery.data?.items.find((item) => item.slug === appSlug);
+  const appsQuery = useAppBySlug(appSlug);
+  const app = appsQuery.app;
   const tenantsQuery = useTenantsByApp(app?.id ?? '');
 
   const [createOpen, setCreateOpen] = useState(false);

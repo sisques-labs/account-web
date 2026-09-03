@@ -1,15 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 import { CreateAppUseCase } from './create-app.use-case';
-import type { ITenancyRepository } from '@/core/tenancy/application/ports/tenancy.repository.port';
+import type { IAppRepository } from '@/core/app/application/ports/app.repository.port';
 
-function makeRepository(overrides: Partial<ITenancyRepository> = {}): ITenancyRepository {
+function makeRepository(overrides: Partial<IAppRepository> = {}): IAppRepository {
   return {
     listApps: vi.fn(),
     createApp: vi.fn(),
-    listTenantsByApp: vi.fn(),
-    listTenantMembers: vi.fn(),
-    createTenant: vi.fn(),
-    addTenantMember: vi.fn(),
     ...overrides,
   };
 }

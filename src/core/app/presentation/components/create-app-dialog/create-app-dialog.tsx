@@ -14,13 +14,13 @@ import { Button } from '@/shared/presentation/components/ui/button/button';
 import { Input } from '@/shared/presentation/components/ui/input/input';
 import { FormField } from '@/shared/presentation/components/ui/form-field/form-field';
 import { Alert } from '@/shared/presentation/components/ui/alert/alert';
-import { createAppSchema, type CreateAppSchema } from '@/core/tenancy/presentation/schemas/create-app.schema';
-import { useCreateApp } from '@/core/tenancy/presentation/hooks/use-create-app/useCreateApp.hook';
-import type { TenancyDict } from '@/core/tenancy/presentation/i18n/en';
+import { createAppSchema, type CreateAppSchema } from '@/core/app/presentation/schemas/create-app.schema';
+import { useCreateApp } from '@/core/app/presentation/hooks/use-create-app/useCreateApp.hook';
+import type { AppDict } from '@/core/app/presentation/i18n/en';
 import type { WidenStringLiterals } from '@/shared/presentation/i18n/widen-literals';
 
 export interface CreateAppDialogProps {
-  dict: WidenStringLiterals<TenancyDict>;
+  dict: WidenStringLiterals<AppDict>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }

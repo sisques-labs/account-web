@@ -10,5 +10,5 @@ export default async function AdminAppsPage({
   const { lang } = await params;
   const dict = getDictionary(lang);
 
-  return <AdminAppsScreen dict={dict.tenancy} lang={lang} />;
+  return <AdminAppsScreen dict={dict.app} lang={lang} />;
 }

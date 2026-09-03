@@ -5,17 +5,23 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 vi.mock('@/core/tenancy/infrastructure/repositories/graphql/tenancy.gql.repository', () => ({
   tenancyGqlRepository: {
-    listApps: vi.fn(),
     listTenantsByApp: vi.fn(),
     listTenantMembers: vi.fn(),
     createTenant: vi.fn(),
     addTenantMember: vi.fn(),
   },
 }));
+vi.mock('@/core/app/infrastructure/repositories/graphql/app.gql.repository', () => ({
+  appGqlRepository: {
+    listApps: vi.fn(),
+    createApp: vi.fn(),
+  },
+}));
 
 import { AdminAppDetailScreen } from './admin-app-detail.screen';
 import { AdminTopBarActionsHost } from '@/core/tenancy/presentation/components/admin-shell/admin-shell';
 import { tenancyGqlRepository } from '@/core/tenancy/infrastructure/repositories/graphql/tenancy.gql.repository';
+import { appGqlRepository } from '@/core/app/infrastructure/repositories/graphql/app.gql.repository';
 import enDict from '@/core/tenancy/presentation/i18n/en';
 
 const APPS = {
@@ -43,7 +49,7 @@ function renderScreen(appSlug = 'gardenia') {
 describe('AdminAppDetailScreen', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(tenancyGqlRepository.listApps).mockResolvedValue(APPS);
+    vi.mocked(appGqlRepository.listApps).mockResolvedValue(APPS);
   });
 
   it('renders the tenant table once the app resolves', async () => {
