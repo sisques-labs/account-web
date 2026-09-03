@@ -26,10 +26,17 @@ Sisques Account by submitting email, password, and display name.
 
 #### Scenario: Registration with invalid input
 - **GIVEN** a visitor on the registration screen
-- **WHEN** they submit an invalid email, a password that fails the
-  configured strength rules, or leave the display name empty
+- **WHEN** they submit an invalid email or a password that fails the
+  configured strength rules
 - **THEN** the system SHALL block submission and show field-level
   validation errors without contacting the server
+
+#### Scenario: Registration with no display name
+- **GIVEN** a visitor on the registration screen
+- **WHEN** they submit a valid email and password and leave the display
+  name field empty
+- **THEN** the system SHALL accept the submission (display name is
+  optional) and proceed as in "Successful registration"
 
 ### Requirement: User Login
 The system SHALL allow a registered user to authenticate with email and
