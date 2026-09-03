@@ -59,6 +59,15 @@ describe('LoginScreen', () => {
     expect(screen.getByRole('button', { name: enDict.login.submit })).toBeInTheDocument();
   });
 
+  it('renders a forgot-password link pointing at the localized route', () => {
+    renderScreen();
+
+    expect(screen.getByRole('link', { name: enDict.login.forgotPasswordLink })).toHaveAttribute(
+      'href',
+      '/en/forgot-password',
+    );
+  });
+
   it('blocks submission and shows validation errors for empty fields', async () => {
     const user = userEvent.setup();
     renderScreen();

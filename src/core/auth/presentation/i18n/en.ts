@@ -25,6 +25,15 @@ const dict = {
       generic: 'Something went wrong. Please try again.',
     },
     registerLink: "Don't have an account? Sign up",
+    forgotPasswordLink: 'Forgot your password?',
+  },
+  forgotPassword: {
+    title: 'Reset your password',
+    description: "We'll send you a link to reset it.",
+    email: { label: 'Email', placeholder: 'you@example.com' },
+    submit: 'Send reset link',
+    unavailable: 'This feature is not available yet.',
+    backToLoginLink: 'Back to log in',
   },
   validation: {
     emailInvalid: 'Enter a valid email address.',

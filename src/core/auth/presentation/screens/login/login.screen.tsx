@@ -18,6 +18,7 @@ import { PasswordInput } from '@/shared/presentation/components/ui/password-inpu
 import { FormField } from '@/shared/presentation/components/ui/form-field/form-field';
 import { Alert } from '@/shared/presentation/components/ui/alert/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/presentation/components/ui/card/card';
+import { Logomark } from '@/shared/presentation/components/ui/logomark/logomark';
 
 export interface LoginScreenProps {
   dict: LoginDict;
@@ -42,41 +43,56 @@ export function LoginScreen({ dict, lang }: LoginScreenProps) {
   const errorMessage = getLoginErrorMessage(loginMutation.error, dict);
 
   return (
-    <Card className="mx-auto w-full max-w-sm">
-      <CardHeader>
-        <CardTitle>{dict.login.title}</CardTitle>
-        <p className="text-sm text-muted-foreground">{dict.login.description}</p>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
-          {errorMessage && <Alert variant="error" message={errorMessage} />}
+    <div className="mx-auto flex w-full max-w-[400px] flex-col gap-6">
+      <div className="flex items-center justify-center gap-2.5">
+        <Logomark size={36} />
+        <div className="text-base font-bold text-[var(--ink)]">
+          Sisqués Labs <span className="font-medium text-[var(--ink-2)]">Platform</span>
+        </div>
+      </div>
 
-          <FormField
-            label={dict.login.email.label}
-            error={errors.email && dict.validation.emailInvalid}
-          >
-            <Input type="email" placeholder={dict.login.email.placeholder} {...register('email')} />
-          </FormField>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>{dict.login.title}</CardTitle>
+          <p className="text-sm text-muted-foreground">{dict.login.description}</p>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+            {errorMessage && <Alert variant="error" message={errorMessage} />}
 
-          <FormField
-            label={dict.login.password.label}
-            error={errors.password && dict.validation.passwordRequired}
-          >
-            <PasswordInput placeholder={dict.login.password.placeholder} {...register('password')} />
-          </FormField>
+            <FormField
+              label={dict.login.email.label}
+              error={errors.email && dict.validation.emailInvalid}
+            >
+              <Input type="email" placeholder={dict.login.email.placeholder} {...register('email')} />
+            </FormField>
 
-          <Button type="submit" loading={loginMutation.isPending}>
-            {loginMutation.isPending ? dict.login.submitting : dict.login.submit}
-          </Button>
-        </form>
+            <FormField
+              label={dict.login.password.label}
+              error={errors.password && dict.validation.passwordRequired}
+            >
+              <PasswordInput placeholder={dict.login.password.placeholder} {...register('password')} />
+            </FormField>
 
-        <p className="mt-4 text-center text-sm">
-          <Link href={`/${lang}/register`} className="underline underline-offset-4">
-            {dict.login.registerLink}
-          </Link>
-        </p>
-      </CardContent>
-    </Card>
+            <div className="-mt-2 flex justify-end">
+              <Link href={`/${lang}/forgot-password`} className="text-sm underline underline-offset-4">
+                {dict.login.forgotPasswordLink}
+              </Link>
+            </div>
+
+            <Button type="submit" loading={loginMutation.isPending}>
+              {loginMutation.isPending ? dict.login.submitting : dict.login.submit}
+            </Button>
+          </form>
+
+          <p className="mt-4 text-center text-sm">
+            <Link href={`/${lang}/register`} className="underline underline-offset-4">
+              {dict.login.registerLink}
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 

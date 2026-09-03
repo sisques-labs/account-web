@@ -18,6 +18,7 @@ import { PasswordInput } from '@/shared/presentation/components/ui/password-inpu
 import { FormField } from '@/shared/presentation/components/ui/form-field/form-field';
 import { Alert } from '@/shared/presentation/components/ui/alert/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/presentation/components/ui/card/card';
+import { Logomark } from '@/shared/presentation/components/ui/logomark/logomark';
 
 export interface RegisterScreenProps {
   dict: RegisterDict;
@@ -43,55 +44,64 @@ export function RegisterScreen({ dict, lang }: RegisterScreenProps) {
   const errorMessage = getRegisterErrorMessage(registerMutation.error, dict);
 
   return (
-    <Card className="mx-auto w-full max-w-sm">
-      <CardHeader>
-        <CardTitle>{dict.register.title}</CardTitle>
-        <p className="text-sm text-muted-foreground">{dict.register.description}</p>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
-          {errorMessage && <Alert variant="error" message={errorMessage} />}
+    <div className="mx-auto flex w-full max-w-[400px] flex-col gap-6">
+      <div className="flex items-center justify-center gap-2.5">
+        <Logomark size={36} />
+        <div className="text-base font-bold text-[var(--ink)]">
+          Sisqués Labs <span className="font-medium text-[var(--ink-2)]">Platform</span>
+        </div>
+      </div>
 
-          <FormField
-            label={dict.register.email.label}
-            error={errors.email && dict.validation.emailInvalid}
-          >
-            <Input
-              type="email"
-              placeholder={dict.register.email.placeholder}
-              {...register('email')}
-            />
-          </FormField>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>{dict.register.title}</CardTitle>
+          <p className="text-sm text-muted-foreground">{dict.register.description}</p>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+            {errorMessage && <Alert variant="error" message={errorMessage} />}
 
-          <FormField
-            label={dict.register.password.label}
-            error={errors.password && dict.validation.passwordTooShort}
-          >
-            <PasswordInput
-              placeholder={dict.register.password.placeholder}
-              {...register('password')}
-            />
-          </FormField>
+            <FormField
+              label={dict.register.email.label}
+              error={errors.email && dict.validation.emailInvalid}
+            >
+              <Input
+                type="email"
+                placeholder={dict.register.email.placeholder}
+                {...register('email')}
+              />
+            </FormField>
 
-          <FormField label={dict.register.displayName.label} error={errors.displayName?.message}>
-            <Input
-              placeholder={dict.register.displayName.placeholder}
-              {...register('displayName')}
-            />
-          </FormField>
+            <FormField
+              label={dict.register.password.label}
+              error={errors.password && dict.validation.passwordTooShort}
+            >
+              <PasswordInput
+                placeholder={dict.register.password.placeholder}
+                {...register('password')}
+              />
+            </FormField>
 
-          <Button type="submit" loading={registerMutation.isPending}>
-            {registerMutation.isPending ? dict.register.submitting : dict.register.submit}
-          </Button>
-        </form>
+            <FormField label={dict.register.displayName.label} error={errors.displayName?.message}>
+              <Input
+                placeholder={dict.register.displayName.placeholder}
+                {...register('displayName')}
+              />
+            </FormField>
 
-        <p className="mt-4 text-center text-sm">
-          <Link href={`/${lang}/login`} className="underline underline-offset-4">
-            {dict.register.loginLink}
-          </Link>
-        </p>
-      </CardContent>
-    </Card>
+            <Button type="submit" loading={registerMutation.isPending}>
+              {registerMutation.isPending ? dict.register.submitting : dict.register.submit}
+            </Button>
+          </form>
+
+          <p className="mt-4 text-center text-sm">
+            <Link href={`/${lang}/login`} className="underline underline-offset-4">
+              {dict.register.loginLink}
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 

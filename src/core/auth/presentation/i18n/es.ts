@@ -28,6 +28,15 @@ const dict = {
       generic: 'Algo ha salido mal. Inténtalo de nuevo.',
     },
     registerLink: '¿No tienes cuenta? Regístrate',
+    forgotPasswordLink: '¿Olvidaste tu contraseña?',
+  },
+  forgotPassword: {
+    title: 'Recupera tu contraseña',
+    description: 'Te enviamos un enlace para restablecerla.',
+    email: { label: 'Correo electrónico', placeholder: 'tucorreo@ejemplo.com' },
+    submit: 'Enviar enlace de recuperación',
+    unavailable: 'Esta función no está disponible todavía.',
+    backToLoginLink: 'Volver a iniciar sesión',
   },
   validation: {
     emailInvalid: 'Introduce un correo electrónico válido.',
