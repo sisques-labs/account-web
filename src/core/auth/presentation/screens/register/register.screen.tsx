@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { isAxiosError } from 'axios';
 import { registerSchema, type RegisterSchema } from '@/core/auth/presentation/schemas/register.schema';
 import { useRegister } from '@/core/auth/presentation/hooks/use-register/useRegister.hook';
 import type { AuthDict } from '@/core/auth/presentation/i18n/en';
@@ -27,7 +26,7 @@ export interface RegisterScreenProps {
 
 export function RegisterScreen({ dict, lang }: RegisterScreenProps) {
   const router = useRouter();
-  const registerMutation = useRegister();
+  const registerMutation = useRegister(dict);
   const {
     register,
     handleSubmit,
@@ -40,8 +39,6 @@ export function RegisterScreen({ dict, lang }: RegisterScreenProps) {
       { onSuccess: () => router.push(`/${lang}/login`) },
     );
   });
-
-  const errorMessage = getRegisterErrorMessage(registerMutation.error, dict);
 
   return (
     <div className="mx-auto flex w-full max-w-[400px] flex-col gap-6">
@@ -59,7 +56,7 @@ export function RegisterScreen({ dict, lang }: RegisterScreenProps) {
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
-            {errorMessage && <Alert variant="error" message={errorMessage} />}
+            {registerMutation.errorMessage && <Alert variant="error" message={registerMutation.errorMessage} />}
 
             <FormField
               label={dict.register.email.label}
@@ -103,12 +100,4 @@ export function RegisterScreen({ dict, lang }: RegisterScreenProps) {
       </Card>
     </div>
   );
-}
-
-function getRegisterErrorMessage(error: unknown, dict: RegisterDict): string | null {
-  if (!error) return null;
-  if (isAxiosError(error) && error.response?.status === 409) {
-    return dict.register.errors.emailAlreadyRegistered;
-  }
-  return dict.register.errors.generic;
 }

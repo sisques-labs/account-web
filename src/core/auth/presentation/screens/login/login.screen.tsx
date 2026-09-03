@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { isAxiosError } from 'axios';
 import { loginSchema, type LoginSchema } from '@/core/auth/presentation/schemas/login.schema';
 import { useLogin } from '@/core/auth/presentation/hooks/use-login/useLogin.hook';
 import type { AuthDict } from '@/core/auth/presentation/i18n/en';
@@ -29,7 +28,7 @@ export interface LoginScreenProps {
 export function LoginScreen({ dict, lang }: LoginScreenProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const loginMutation = useLogin();
+  const loginMutation = useLogin(dict);
   const {
     register,
     handleSubmit,
@@ -50,8 +49,6 @@ export function LoginScreen({ dict, lang }: LoginScreenProps) {
     });
   });
 
-  const errorMessage = getLoginErrorMessage(loginMutation.error, dict);
-
   return (
     <div className="mx-auto flex w-full max-w-[400px] flex-col gap-6">
       <div className="flex items-center justify-center gap-2.5">
@@ -68,7 +65,7 @@ export function LoginScreen({ dict, lang }: LoginScreenProps) {
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
-            {errorMessage && <Alert variant="error" message={errorMessage} />}
+            {loginMutation.errorMessage && <Alert variant="error" message={loginMutation.errorMessage} />}
 
             <FormField
               label={dict.login.email.label}
@@ -104,12 +101,4 @@ export function LoginScreen({ dict, lang }: LoginScreenProps) {
       </Card>
     </div>
   );
-}
-
-function getLoginErrorMessage(error: unknown, dict: LoginDict): string | null {
-  if (!error) return null;
-  if (isAxiosError(error) && error.response?.status === 401) {
-    return dict.login.errors.invalidCredentials;
-  }
-  return dict.login.errors.generic;
 }
