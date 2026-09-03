@@ -5,9 +5,10 @@ import { logHttpError } from './http-logger';
 import { HTTP_TIMEOUT_MS } from '@/shared/config/env';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '/api';
-// Placeholder auth route convention — align with the first `auth` bounded
-// context's actual endpoints once it exists.
-const AUTH_SKIP = ['/auth/login', '/auth/register'];
+// account-api mounts auth under URI versioning (`/api/v1/auth/*`); the
+// Next.js proxy forwards paths unchanged, so the version segment must be
+// present here too.
+const AUTH_SKIP = ['/v1/auth/login', '/v1/auth/register'];
 
 // Bare instance — no interceptors. Used for refresh and post-401 retry.
 export const bareHttp = axios.create({
@@ -17,7 +18,7 @@ export const bareHttp = axios.create({
 });
 
 export async function doRefresh(): Promise<string> {
-  const res = await bareHttp.post<{ accessToken: string }>('/auth/refresh');
+  const res = await bareHttp.post<{ accessToken: string }>('/v1/auth/refresh');
   useSessionStore.getState().setAccessToken(res.data.accessToken);
   return res.data.accessToken;
 }
@@ -56,7 +57,7 @@ http.interceptors.response.use(
     }
 
     const path = originalRequest.url ?? '';
-    if (path.endsWith('/auth/refresh')) {
+    if (path.endsWith('/v1/auth/refresh')) {
       useSessionStore.getState().clearAccessToken();
       useSessionStore.getState().redirectToLogin();
       return Promise.reject(error);
