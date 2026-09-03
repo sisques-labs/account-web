@@ -40,7 +40,7 @@ function AdminAppDetailScreen({ dict, appSlug }: AdminAppDetailScreenProps) {
   );
 
   return (
-    <div className="flex w-full flex-col gap-5">
+    <div className="flex w-full max-w-[1000px] flex-col gap-5">
       {/* This title shows the specific app's name — genuinely different
           information from AdminShell's generic "Apps del ecosistema"
           section label in the top bar, so it isn't a duplicate. */}

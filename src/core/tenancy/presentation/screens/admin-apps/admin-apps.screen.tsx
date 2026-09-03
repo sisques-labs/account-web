@@ -31,7 +31,7 @@ function AdminAppsScreen({ dict, lang }: AdminAppsScreenProps) {
   useAdminTopBarActions(<Button onClick={() => setCreateOpen(true)}>{dict.apps.createApp}</Button>);
 
   return (
-    <div className="flex w-full flex-col gap-6">
+    <div className="flex w-full max-w-[1000px] flex-col gap-6">
       {appsQuery.isLoading && (
         <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-5">
           <Skeleton height={160} />

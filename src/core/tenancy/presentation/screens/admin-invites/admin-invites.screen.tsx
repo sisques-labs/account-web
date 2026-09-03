@@ -9,7 +9,7 @@ export interface AdminInvitesScreenProps {
 
 function AdminInvitesScreen({ dict }: AdminInvitesScreenProps) {
   return (
-    <div className="flex w-full flex-col gap-5">
+    <div className="flex w-full max-w-[1000px] flex-col gap-5">
       <Card className="overflow-hidden">
         <div className="grid grid-cols-[2fr_2fr_0.8fr_1.2fr_1fr] gap-3 border-b border-[var(--rule)] px-4 pb-3 pt-4 eyebrow">
           <div>{dict.invites.columns.email}</div>
