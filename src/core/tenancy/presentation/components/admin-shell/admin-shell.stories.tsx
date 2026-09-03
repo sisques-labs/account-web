@@ -32,7 +32,7 @@ export const PlatformAdmin: Story = {
   },
   decorators: [
     (Story) => {
-      useSessionStore.setState({ accessToken: makeToken(true) });
+      useSessionStore.setState({ accessToken: makeToken(true), hasBootstrapped: true });
       return <Story />;
     },
   ],
@@ -47,7 +47,26 @@ export const Unauthorized: Story = {
   },
   decorators: [
     (Story) => {
-      useSessionStore.setState({ accessToken: makeToken(false) });
+      useSessionStore.setState({ accessToken: makeToken(false), hasBootstrapped: true });
+      return <Story />;
+    },
+  ],
+};
+
+// The moment right after a hard reload, before the app-wide silent session
+// bootstrap (see useSessionBootstrap) has resolved — AdminShell renders
+// nothing rather than redirecting, so it doesn't bounce an already
+// logged-in visitor while their session is still being restored.
+export const Bootstrapping: Story = {
+  parameters: { nextjs: { navigation: { pathname: '/en/admin/apps' } } },
+  args: {
+    lang: 'en',
+    dict: enDict,
+    children: <div>Page content</div>,
+  },
+  decorators: [
+    (Story) => {
+      useSessionStore.setState({ accessToken: null, hasBootstrapped: false });
       return <Story />;
     },
   ],

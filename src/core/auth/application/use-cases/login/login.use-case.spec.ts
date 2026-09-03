@@ -31,6 +31,8 @@ describe('LoginUseCase', () => {
       setAccessToken,
       clearAccessToken: vi.fn(),
       redirectToLogin: vi.fn(),
+      hasBootstrapped: true,
+      setHasBootstrapped: vi.fn(),
     });
     const repository = makeRepository({
       login: vi.fn().mockResolvedValue({ accessToken: 'access-tok' }),
@@ -51,6 +53,8 @@ describe('LoginUseCase', () => {
       setAccessToken,
       clearAccessToken: vi.fn(),
       redirectToLogin: vi.fn(),
+      hasBootstrapped: true,
+      setHasBootstrapped: vi.fn(),
     });
     const repository = makeRepository({
       login: vi.fn().mockRejectedValue(new Error('invalid credentials')),

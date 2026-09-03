@@ -113,6 +113,8 @@ function mockSessionStore(
     clearAccessToken,
     redirectToLogin,
     setAccessToken: vi.fn(),
+    hasBootstrapped: true,
+    setHasBootstrapped: vi.fn(),
   });
 }
 

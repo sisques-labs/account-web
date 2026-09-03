@@ -58,6 +58,7 @@ function resolveActiveSection(pathname: string): AdminSection {
 }
 
 function AdminShell({ lang, dict, children }: AdminShellProps) {
+  const hasBootstrapped = useSessionStore((state) => state.hasBootstrapped);
   const hasSession = useSessionStore((state) => state.accessToken !== null);
   const isPlatformAdmin = useIsPlatformAdmin();
   const pathname = usePathname();
@@ -70,13 +71,19 @@ function AdminShell({ lang, dict, children }: AdminShellProps) {
   // path along as `redirectTo` so LoginScreen can send them back here after
   // a successful login. A signed-in non-admin, by contrast, gets the
   // "unauthorized" state below — logging in again wouldn't grant them access.
+  //
+  // Gated on `hasBootstrapped`: the session store isn't persisted, so a
+  // hard reload starts with `accessToken: null` even for an already
+  // logged-in visitor — the app-wide bootstrap (see useSessionBootstrap)
+  // gets one silent chance to restore the session from the refresh cookie
+  // before this decides there's genuinely no session to redirect away from.
   useEffect(() => {
-    if (hasSession) return;
+    if (!hasBootstrapped || hasSession) return;
     const redirectTo = pathname ? `?redirectTo=${encodeURIComponent(pathname)}` : '';
     router.replace(`/${lang}/login${redirectTo}`);
-  }, [hasSession, pathname, lang, router]);
+  }, [hasBootstrapped, hasSession, pathname, lang, router]);
 
-  if (!hasSession) {
+  if (!hasBootstrapped || !hasSession) {
     return null;
   }
 

@@ -10,15 +10,30 @@ import { create } from 'zustand';
  */
 interface SessionState {
   accessToken: string | null;
+  /**
+   * Whether the app-load session bootstrap (see
+   * `shared/presentation/hooks/use-session-bootstrap`) has finished — either
+   * by confirming there's no valid session, or by restoring one via a
+   * silent refresh. A gated route (AdminShell, and any future protected
+   * route) MUST wait for this to be true before redirecting an
+   * unauthenticated visitor to `/login` — otherwise a hard page reload
+   * (which resets `accessToken` to null, since this store isn't persisted)
+   * bounces a still-logged-in visitor before the silent refresh has a
+   * chance to run.
+   */
+  hasBootstrapped: boolean;
   setAccessToken: (token: string | null) => void;
   clearAccessToken: () => void;
+  setHasBootstrapped: () => void;
   redirectToLogin: () => void;
 }
 
 export const useSessionStore = create<SessionState>()((set) => ({
   accessToken: null,
+  hasBootstrapped: false,
   setAccessToken: (token) => set({ accessToken: token }),
   clearAccessToken: () => set({ accessToken: null }),
+  setHasBootstrapped: () => set({ hasBootstrapped: true }),
   redirectToLogin: () => {
     /* v8 ignore next -- SSR guard: window is always defined under jsdom */
     if (typeof window === 'undefined') return;

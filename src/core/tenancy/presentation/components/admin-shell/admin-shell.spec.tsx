@@ -32,11 +32,24 @@ function makeToken(platformAdmin: boolean): string {
 describe('AdminShell', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useSessionStore.setState({ accessToken: null });
+    useSessionStore.setState({ accessToken: null, hasBootstrapped: true });
     mockPathname = '/en/admin/apps';
   });
 
-  it('redirects to login with a redirectTo param when there is no session', () => {
+  it('renders nothing and does not redirect while the session bootstrap is still in flight', () => {
+    useSessionStore.setState({ accessToken: null, hasBootstrapped: false });
+    render(
+      <AdminShell lang="en" dict={enDict}>
+        <div>content</div>
+      </AdminShell>,
+    );
+
+    expect(replace).not.toHaveBeenCalled();
+    expect(screen.queryByText('content')).not.toBeInTheDocument();
+    expect(screen.queryByText(enDict.admin.unauthorized.title)).not.toBeInTheDocument();
+  });
+
+  it('redirects to login with a redirectTo param once bootstrap confirms there is no session', () => {
     render(
       <AdminShell lang="en" dict={enDict}>
         <div>content</div>
@@ -46,6 +59,26 @@ describe('AdminShell', () => {
     expect(replace).toHaveBeenCalledWith('/en/login?redirectTo=%2Fen%2Fadmin%2Fapps');
     expect(screen.queryByText('content')).not.toBeInTheDocument();
     expect(screen.queryByText(enDict.admin.unauthorized.title)).not.toBeInTheDocument();
+  });
+
+  it('does not redirect when a session appears (e.g. bootstrap restores it) after the bootstrapping render', () => {
+    useSessionStore.setState({ accessToken: null, hasBootstrapped: false });
+    const { rerender } = render(
+      <AdminShell lang="en" dict={enDict}>
+        <div>content</div>
+      </AdminShell>,
+    );
+    expect(replace).not.toHaveBeenCalled();
+
+    useSessionStore.setState({ accessToken: makeToken(true), hasBootstrapped: true });
+    rerender(
+      <AdminShell lang="en" dict={enDict}>
+        <div>content</div>
+      </AdminShell>,
+    );
+
+    expect(replace).not.toHaveBeenCalled();
+    expect(screen.getByText('content')).toBeInTheDocument();
   });
 
   it('shows the unauthorized message for a signed-in non-admin, without redirecting', () => {

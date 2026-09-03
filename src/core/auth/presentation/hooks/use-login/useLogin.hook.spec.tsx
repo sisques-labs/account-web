@@ -27,6 +27,8 @@ describe('useLogin', () => {
       setAccessToken: vi.fn(),
       clearAccessToken: vi.fn(),
       redirectToLogin: vi.fn(),
+      hasBootstrapped: true,
+      setHasBootstrapped: vi.fn(),
     });
   });
 

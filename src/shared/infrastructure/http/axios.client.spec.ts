@@ -40,6 +40,8 @@ function mockSessionStore(
     clearAccessToken,
     redirectToLogin,
     setAccessToken: vi.fn(),
+    hasBootstrapped: true,
+    setHasBootstrapped: vi.fn(),
   });
 }
 
@@ -255,6 +257,8 @@ describe('axios.client — doRefresh', () => {
       clearAccessToken: vi.fn(),
       redirectToLogin: vi.fn(),
       setAccessToken,
+      hasBootstrapped: true,
+      setHasBootstrapped: vi.fn(),
     });
 
     const { doRefresh, bareHttp } = await import('./axios.client');
