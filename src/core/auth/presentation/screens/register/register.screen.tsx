@@ -8,7 +8,10 @@ import { isAxiosError } from 'axios';
 import { registerSchema, type RegisterSchema } from '@/core/auth/presentation/schemas/register.schema';
 import { useRegister } from '@/core/auth/presentation/hooks/use-register/useRegister.hook';
 import type { AuthDict } from '@/core/auth/presentation/i18n/en';
+import type { WidenStringLiterals } from '@/shared/presentation/i18n/widen-literals';
 import type { Locale } from '@/shared/presentation/i18n/locale';
+
+type RegisterDict = WidenStringLiterals<AuthDict>;
 import { Button } from '@/shared/presentation/components/ui/button/button';
 import { Input } from '@/shared/presentation/components/ui/input/input';
 import { PasswordInput } from '@/shared/presentation/components/ui/password-input/password-input';
@@ -17,7 +20,7 @@ import { Alert } from '@/shared/presentation/components/ui/alert/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/presentation/components/ui/card/card';
 
 export interface RegisterScreenProps {
-  dict: AuthDict;
+  dict: RegisterDict;
   lang: Locale;
 }
 
@@ -92,7 +95,7 @@ export function RegisterScreen({ dict, lang }: RegisterScreenProps) {
   );
 }
 
-function getRegisterErrorMessage(error: unknown, dict: AuthDict): string | null {
+function getRegisterErrorMessage(error: unknown, dict: RegisterDict): string | null {
   if (!error) return null;
   if (isAxiosError(error) && error.response?.status === 409) {
     return dict.register.errors.emailAlreadyRegistered;

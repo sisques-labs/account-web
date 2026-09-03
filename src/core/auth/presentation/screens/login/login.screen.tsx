@@ -8,7 +8,10 @@ import { isAxiosError } from 'axios';
 import { loginSchema, type LoginSchema } from '@/core/auth/presentation/schemas/login.schema';
 import { useLogin } from '@/core/auth/presentation/hooks/use-login/useLogin.hook';
 import type { AuthDict } from '@/core/auth/presentation/i18n/en';
+import type { WidenStringLiterals } from '@/shared/presentation/i18n/widen-literals';
 import type { Locale } from '@/shared/presentation/i18n/locale';
+
+type LoginDict = WidenStringLiterals<AuthDict>;
 import { Button } from '@/shared/presentation/components/ui/button/button';
 import { Input } from '@/shared/presentation/components/ui/input/input';
 import { PasswordInput } from '@/shared/presentation/components/ui/password-input/password-input';
@@ -17,7 +20,7 @@ import { Alert } from '@/shared/presentation/components/ui/alert/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/presentation/components/ui/card/card';
 
 export interface LoginScreenProps {
-  dict: AuthDict;
+  dict: LoginDict;
   lang: Locale;
 }
 
@@ -77,7 +80,7 @@ export function LoginScreen({ dict, lang }: LoginScreenProps) {
   );
 }
 
-function getLoginErrorMessage(error: unknown, dict: AuthDict): string | null {
+function getLoginErrorMessage(error: unknown, dict: LoginDict): string | null {
   if (!error) return null;
   if (isAxiosError(error) && error.response?.status === 401) {
     return dict.login.errors.invalidCredentials;
