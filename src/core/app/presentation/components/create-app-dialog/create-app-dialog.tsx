@@ -15,7 +15,7 @@ import { Input } from '@/shared/presentation/components/ui/input/input';
 import { FormField } from '@/shared/presentation/components/ui/form-field/form-field';
 import { Alert } from '@/shared/presentation/components/ui/alert/alert';
 import { createAppSchema, type CreateAppSchema } from '@/core/app/presentation/schemas/create-app.schema';
-import { useCreateApp } from '@/core/app/presentation/hooks/use-create-app/useCreateApp.hook';
+import { useCreateAppDialog } from '@/core/app/presentation/hooks/use-create-app-dialog/useCreateAppDialog.hook';
 import type { AppDict } from '@/core/app/presentation/i18n/en';
 import type { WidenStringLiterals } from '@/shared/presentation/i18n/widen-literals';
 
@@ -26,34 +26,20 @@ export interface CreateAppDialogProps {
 }
 
 function CreateAppDialog({ dict, open, onOpenChange }: CreateAppDialogProps) {
-  const createApp = useCreateApp();
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
   } = useForm<CreateAppSchema>({ resolver: zodResolver(createAppSchema) });
+  const createApp = useCreateAppDialog({ onOpenChange, reset });
 
   const onSubmit = handleSubmit((data) => {
-    createApp.mutate(
-      { name: data.name },
-      {
-        onSuccess: () => {
-          reset();
-          onOpenChange(false);
-        },
-      },
-    );
+    createApp.submit(data.name);
   });
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        if (!next) reset();
-        onOpenChange(next);
-      }}
-    >
+    <Dialog open={open} onOpenChange={createApp.onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{dict.createAppDialog.title}</DialogTitle>
