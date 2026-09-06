@@ -10,7 +10,9 @@ vi.mock('next/navigation', () => ({
 
 let mockPathname = '/en/admin/apps';
 
-import { AdminShell, useAdminTopBarActions } from './admin-shell';
+import { AdminShell } from './admin-shell';
+import { useAdminTopBarActions } from '@/core/tenancy/presentation/hooks/use-admin-top-bar-actions/useAdminTopBarActions.hook';
+import { useAdminTopBarStore } from '@/core/tenancy/infrastructure/store/admin-top-bar.store';
 import { useSessionStore } from '@/shared/infrastructure/store/session.store';
 import enDict from '@/core/tenancy/presentation/i18n/en';
 
@@ -33,6 +35,7 @@ describe('AdminShell', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useSessionStore.setState({ accessToken: null, hasBootstrapped: true });
+    useAdminTopBarStore.setState({ actions: null });
     mockPathname = '/en/admin/apps';
   });
 

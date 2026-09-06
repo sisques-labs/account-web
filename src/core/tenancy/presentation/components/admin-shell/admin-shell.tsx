@@ -1,8 +1,8 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
 import { AdminSidebar } from '@/core/tenancy/presentation/components/admin-sidebar/admin-sidebar';
 import { useAdminGuard } from '@/core/tenancy/presentation/hooks/use-admin-guard/useAdminGuard.hook';
+import { useAdminTopBarStore } from '@/core/tenancy/infrastructure/store/admin-top-bar.store';
 import type { Locale } from '@/shared/presentation/i18n/locale';
 import type { TenancyDict } from '@/core/tenancy/presentation/i18n/en';
 import type { WidenStringLiterals } from '@/shared/presentation/i18n/widen-literals';
@@ -13,42 +13,6 @@ export interface AdminShellProps {
   children: React.ReactNode;
 }
 
-/**
- * Lets a page rendered inside AdminShell inject an action (e.g. "Crear app")
- * into the shared top bar, next to the section title — matching the
- * canvas's TopBar `actions` slot. Setting state here only re-renders
- * AdminShell's own JSX, not the `children` subtree (React bails out of
- * re-rendering a subtree when the exact same element reference is passed
- * through again), so a screen's `useAdminTopBarActions` effect re-running
- * on every AdminShell re-render can't spiral into a loop.
- */
-const AdminTopBarActionsContext = createContext<(node: React.ReactNode) => void>(() => {});
-
-export function useAdminTopBarActions(node: React.ReactNode): void {
-  const setActions = useContext(AdminTopBarActionsContext);
-  useEffect(() => {
-    setActions(node);
-    return () => setActions(null);
-  }, [node, setActions]);
-}
-
-/**
- * Minimal stand-in for AdminShell's top-bar slot, for unit tests and
- * Storybook stories of a screen that calls `useAdminTopBarActions` in
- * isolation (without mounting the full gated AdminShell). Renders whatever
- * the screen injects into a `data-testid="admin-top-bar-actions"` node
- * above `children`, the same way AdminShell's real top bar does.
- */
-export function AdminTopBarActionsHost({ children }: { children: React.ReactNode }) {
-  const [actions, setActions] = useState<React.ReactNode>(null);
-  return (
-    <AdminTopBarActionsContext.Provider value={setActions}>
-      <div data-testid="admin-top-bar-actions">{actions}</div>
-      {children}
-    </AdminTopBarActionsContext.Provider>
-  );
-}
-
 function AdminShell({ lang, dict, children }: AdminShellProps) {
   // Auth-guard logic (session bootstrap gating, the login redirect, and
   // resolving which admin section is active) lives entirely in
@@ -56,7 +20,11 @@ function AdminShell({ lang, dict, children }: AdminShellProps) {
   // that hook for why the redirect waits on `hasBootstrapped` and why a
   // signed-in non-admin gets "unauthorized" instead of being redirected.
   const { status, active } = useAdminGuard(lang);
-  const [topBarActions, setTopBarActions] = useState<React.ReactNode>(null);
+  // A screen nested arbitrarily deep under `children` injects its top-bar
+  // action (e.g. "Crear app") via useAdminTopBarActions, which writes to
+  // this same store — see admin-top-bar.store.ts for why that's a Zustand
+  // store rather than a useState + React Context.
+  const topBarActions = useAdminTopBarStore((state) => state.actions);
 
   if (status === 'pending') {
     return null;
@@ -83,9 +51,7 @@ function AdminShell({ lang, dict, children }: AdminShellProps) {
           <span className="text-sm font-semibold text-[var(--ink)]">{dict.admin.nav[active]}</span>
           {topBarActions}
         </div>
-        <div className="flex-1 overflow-auto p-6">
-          <AdminTopBarActionsContext.Provider value={setTopBarActions}>{children}</AdminTopBarActionsContext.Provider>
-        </div>
+        <div className="flex-1 overflow-auto p-6">{children}</div>
       </div>
     </div>
   );
