@@ -3,15 +3,14 @@
 import { useState } from 'react';
 import { Card } from '@/shared/presentation/components/ui/card/card';
 import { Button } from '@/shared/presentation/components/ui/button/button';
-import { Skeleton } from '@/shared/presentation/components/ui/skeleton/skeleton';
-import { Alert } from '@/shared/presentation/components/ui/alert/alert';
 import { EmptyState } from '@/shared/presentation/components/ui/empty-state/empty-state';
 import { useAppBySlug } from '@/core/app/presentation/hooks/use-app-by-slug/useAppBySlug.hook';
 import { useTenantsByApp } from '@/core/tenancy/presentation/hooks/use-tenants-by-app/useTenantsByApp.hook';
 import { CreateTenantDialog } from '@/core/tenancy/presentation/components/create-tenant-dialog/create-tenant-dialog';
 import { TenantMembersDialog } from '@/core/tenancy/presentation/components/tenant-members-dialog/tenant-members-dialog';
-import { useAdminTopBarActions } from '@/core/tenancy/presentation/components/admin-shell/admin-shell';
+import { useAdminTopBarActions } from '@/core/tenancy/presentation/hooks/use-admin-top-bar-actions/useAdminTopBarActions.hook';
 import { formatDate } from '@/shared/lib/format-date';
+import type { App } from '@/core/app/domain/interfaces/app.interface';
 import type { Tenant } from '@/core/tenancy/domain/interfaces/tenant.interface';
 import type { TenancyDict } from '@/core/tenancy/presentation/i18n/en';
 import type { WidenStringLiterals } from '@/shared/presentation/i18n/widen-literals';
@@ -22,12 +21,12 @@ export interface AdminAppDetailScreenProps {
 }
 
 function AdminAppDetailScreen({ dict, appSlug }: AdminAppDetailScreenProps) {
-  const appsQuery = useAppBySlug(appSlug);
-  const app = appsQuery.app;
-  const tenantsQuery = useTenantsByApp(app?.id ?? '');
-
+  // Suspends while loading and throws on error — the page's <Suspense>
+  // (AdminAppDetailSkeleton) and app/[lang]/admin/error.tsx cover those
+  // cases, so this screen only ever renders success. `app` is undefined
+  // when there is no error but the slug genuinely doesn't match any app.
+  const { app } = useAppBySlug(appSlug);
   const [createOpen, setCreateOpen] = useState(false);
-  const [membersTenant, setMembersTenant] = useState<Tenant | null>(null);
 
   // "Crear tenant" lives in AdminShell's shared top bar, next to the
   // section title, rather than duplicated inside the page body.
@@ -42,21 +41,38 @@ function AdminAppDetailScreen({ dict, appSlug }: AdminAppDetailScreenProps) {
           section label in the top bar, so it isn't a duplicate. */}
       <h1 className="headline text-2xl">{app?.name ?? appSlug}</h1>
 
-      {(appsQuery.isLoading || (app && tenantsQuery.isLoading)) && (
-        <div className="flex flex-col gap-2">
-          <Skeleton variant="line" />
-          <Skeleton variant="line" />
-          <Skeleton variant="line" />
-        </div>
+      {app ? (
+        <AdminAppDetailBody dict={dict} app={app} createOpen={createOpen} onCreateOpenChange={setCreateOpen} />
+      ) : (
+        <EmptyState title={dict.appDetail.notFound.title} description={dict.appDetail.notFound.description} />
       )}
+    </div>
+  );
+}
 
-      {(appsQuery.isError || tenantsQuery.isError) && <Alert variant="error" message={dict.appDetail.error} />}
+interface AdminAppDetailBodyProps {
+  dict: WidenStringLiterals<TenancyDict>;
+  app: App;
+  createOpen: boolean;
+  onCreateOpenChange: (open: boolean) => void;
+}
 
-      {app && tenantsQuery.isSuccess && tenantsQuery.data.items.length === 0 && (
+/**
+ * Only mounts once AdminAppDetailScreen has confirmed `app` exists, so
+ * useTenantsByApp (a useSuspenseQuery) always gets a real appId — that
+ * hook type doesn't support an `enabled` guard for a not-yet-known id.
+ */
+function AdminAppDetailBody({ dict, app, createOpen, onCreateOpenChange }: AdminAppDetailBodyProps) {
+  const tenantsQuery = useTenantsByApp(app.id);
+  const [membersTenant, setMembersTenant] = useState<Tenant | null>(null);
+
+  return (
+    <>
+      {tenantsQuery.data.items.length === 0 && (
         <EmptyState title={dict.appDetail.empty.title} description={dict.appDetail.empty.description} />
       )}
 
-      {app && tenantsQuery.isSuccess && tenantsQuery.data.items.length > 0 && (
+      {tenantsQuery.data.items.length > 0 && (
         <Card className="overflow-hidden">
           <div className="flex flex-col">
             <div className="grid grid-cols-[2fr_1fr_1fr] gap-3 border-b border-[var(--rule)] px-4 pb-3 pt-4 eyebrow">
@@ -85,9 +101,7 @@ function AdminAppDetailScreen({ dict, appSlug }: AdminAppDetailScreenProps) {
         </Card>
       )}
 
-      {app && (
-        <CreateTenantDialog dict={dict} appId={app.id} open={createOpen} onOpenChange={setCreateOpen} />
-      )}
+      <CreateTenantDialog dict={dict} appId={app.id} open={createOpen} onOpenChange={onCreateOpenChange} />
 
       {membersTenant && (
         <TenantMembersDialog
@@ -100,7 +114,7 @@ function AdminAppDetailScreen({ dict, appSlug }: AdminAppDetailScreenProps) {
           }}
         />
       )}
-    </div>
+    </>
   );
 }
 

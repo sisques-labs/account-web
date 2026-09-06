@@ -6,12 +6,10 @@ import { Card } from '@/shared/presentation/components/ui/card/card';
 import { Badge } from '@/shared/presentation/components/ui/badge/badge';
 import { Button } from '@/shared/presentation/components/ui/button/button';
 import { buttonVariants } from '@/shared/presentation/components/ui/button/button-variants';
-import { Skeleton } from '@/shared/presentation/components/ui/skeleton/skeleton';
-import { Alert } from '@/shared/presentation/components/ui/alert/alert';
 import { EmptyState } from '@/shared/presentation/components/ui/empty-state/empty-state';
 import { useApps } from '@/core/app/presentation/hooks/use-apps/useApps.hook';
 import { CreateAppDialog } from '@/core/app/presentation/components/create-app-dialog/create-app-dialog';
-import { useAdminTopBarActions } from '@/core/tenancy/presentation/components/admin-shell/admin-shell';
+import { useAdminTopBarActions } from '@/core/tenancy/presentation/hooks/use-admin-top-bar-actions/useAdminTopBarActions.hook';
 import type { Locale } from '@/shared/presentation/i18n/locale';
 import type { AppDict } from '@/core/app/presentation/i18n/en';
 import type { WidenStringLiterals } from '@/shared/presentation/i18n/widen-literals';
@@ -22,6 +20,9 @@ export interface AdminAppsScreenProps {
 }
 
 function AdminAppsScreen({ dict, lang }: AdminAppsScreenProps) {
+  // Suspends while loading and throws on error — the page's <Suspense>
+  // (AdminAppsSkeleton) and app/[lang]/admin/error.tsx cover those cases,
+  // so this screen only ever renders the success state.
   const appsQuery = useApps();
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -32,20 +33,11 @@ function AdminAppsScreen({ dict, lang }: AdminAppsScreenProps) {
 
   return (
     <div className="flex w-full max-w-[1000px] flex-col gap-6">
-      {appsQuery.isLoading && (
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-5">
-          <Skeleton height={160} />
-          <Skeleton height={160} />
-        </div>
-      )}
-
-      {appsQuery.isError && <Alert variant="error" message={dict.apps.error} />}
-
-      {appsQuery.isSuccess && appsQuery.data.items.length === 0 && (
+      {appsQuery.data.items.length === 0 && (
         <EmptyState title={dict.apps.empty.title} description={dict.apps.empty.description} />
       )}
 
-      {appsQuery.isSuccess && appsQuery.data.items.length > 0 && (
+      {appsQuery.data.items.length > 0 && (
         <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-5">
           {appsQuery.data.items.map((app) => (
             <Card key={app.id} className="p-5">

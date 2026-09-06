@@ -23,7 +23,10 @@ const dict = {
       title: 'No tenants yet',
       description: 'Tenants created for this app will show up here.',
     },
-    error: 'Could not load tenants. Please try again.',
+    notFound: {
+      title: 'App not found',
+      description: "This app doesn't exist or is no longer available.",
+    },
   },
   createTenantDialog: {
     title: 'New tenant',

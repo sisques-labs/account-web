@@ -11,7 +11,6 @@ const dict = {
       title: 'No apps yet',
       description: 'Apps created in account-api will show up here.',
     },
-    error: 'Could not load apps. Please try again.',
   },
   createAppDialog: {
     title: 'New app',

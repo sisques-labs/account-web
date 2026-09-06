@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Suspense } from 'react';
 
 vi.mock('@/core/tenancy/infrastructure/repositories/graphql/tenancy.gql.repository', () => ({
   tenancyGqlRepository: {
@@ -19,7 +20,8 @@ vi.mock('@/core/app/infrastructure/repositories/graphql/app.gql.repository', () 
 }));
 
 import { AdminAppDetailScreen } from './admin-app-detail.screen';
-import { AdminTopBarActionsHost } from '@/core/tenancy/presentation/components/admin-shell/admin-shell';
+import { AdminTopBarActionsHost } from '@/core/tenancy/presentation/components/admin-top-bar-actions-host/admin-top-bar-actions-host';
+import { useAdminTopBarStore } from '@/core/tenancy/infrastructure/store/admin-top-bar.store';
 import { tenancyGqlRepository } from '@/core/tenancy/infrastructure/repositories/graphql/tenancy.gql.repository';
 import { appGqlRepository } from '@/core/app/infrastructure/repositories/graphql/app.gql.repository';
 import enDict from '@/core/tenancy/presentation/i18n/en';
@@ -34,13 +36,19 @@ const APPS = {
 
 // AdminAppDetailScreen injects "Crear tenant" into AdminShell's shared top
 // bar via useAdminTopBarActions() — AdminTopBarActionsHost stands in for
-// that slot so the button still mounts in this screen-only test.
+// that slot so the button still mounts in this screen-only test. Both
+// useAppBySlug() and useTenantsByApp() suspend while loading (the real
+// Suspense fallback and error boundary live in
+// app/[lang]/admin/apps/[appSlug]/page.tsx and app/[lang]/admin/error.tsx),
+// so this test wraps the screen in its own <Suspense> the same way.
 function renderScreen(appSlug = 'gardenia') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
       <AdminTopBarActionsHost>
-        <AdminAppDetailScreen dict={enDict} appSlug={appSlug} />
+        <Suspense fallback={<div>loading</div>}>
+          <AdminAppDetailScreen dict={enDict} appSlug={appSlug} />
+        </Suspense>
       </AdminTopBarActionsHost>
     </QueryClientProvider>,
   );
@@ -49,6 +57,7 @@ function renderScreen(appSlug = 'gardenia') {
 describe('AdminAppDetailScreen', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useAdminTopBarStore.setState({ actions: null });
     vi.mocked(appGqlRepository.listApps).mockResolvedValue(APPS);
   });
 
@@ -77,6 +86,13 @@ describe('AdminAppDetailScreen', () => {
     renderScreen();
 
     expect(await screen.findByText(enDict.appDetail.empty.title)).toBeInTheDocument();
+  });
+
+  it('shows a not-found state for a slug that matches no app', async () => {
+    renderScreen('missing-app');
+
+    expect(await screen.findByText(enDict.appDetail.notFound.title)).toBeInTheDocument();
+    expect(tenancyGqlRepository.listTenantsByApp).not.toHaveBeenCalled();
   });
 
   it('opens the create-tenant dialog', async () => {

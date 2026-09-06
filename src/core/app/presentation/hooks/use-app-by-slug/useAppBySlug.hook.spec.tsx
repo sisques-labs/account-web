@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Component, Suspense } from 'react';
 import type { ReactNode } from 'react';
 
 vi.mock('@/core/app/infrastructure/repositories/graphql/app.gql.repository', () => ({
@@ -13,9 +14,26 @@ vi.mock('@/core/app/infrastructure/repositories/graphql/app.gql.repository', () 
 import { useAppBySlug } from './useAppBySlug.hook';
 import { appGqlRepository } from '@/core/app/infrastructure/repositories/graphql/app.gql.repository';
 
+class TestErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state: { error: Error | null } = { error: null };
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+  render() {
+    if (this.state.error) return <div>error boundary: {this.state.error.message}</div>;
+    return this.props.children;
+  }
+}
+
 function wrapper({ children }: { children: ReactNode }) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TestErrorBoundary>
+        <Suspense fallback={<div>loading</div>}>{children}</Suspense>
+      </TestErrorBoundary>
+    </QueryClientProvider>
+  );
 }
 
 const APPS = {
@@ -52,12 +70,11 @@ describe('useAppBySlug', () => {
     expect(result.current.app).toBeUndefined();
   });
 
-  it('exposes the underlying query loading/error state', async () => {
+  it('throws to the nearest error boundary when the underlying query fails', async () => {
     vi.mocked(appGqlRepository.listApps).mockRejectedValue(new Error('boom'));
 
-    const { result } = renderHook(() => useAppBySlug('gardenia'), { wrapper });
+    renderHook(() => useAppBySlug('gardenia'), { wrapper });
 
-    await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(result.current.app).toBeUndefined();
+    expect(await screen.findByText('error boundary: boom')).toBeInTheDocument();
   });
 });

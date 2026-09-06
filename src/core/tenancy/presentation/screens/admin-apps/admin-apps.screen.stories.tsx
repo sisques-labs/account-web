@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { AdminAppsScreen } from './admin-apps.screen';
-import { AdminTopBarActionsHost } from '@/core/tenancy/presentation/components/admin-shell/admin-shell';
+import { AdminTopBarActionsHost } from '@/core/tenancy/presentation/components/admin-top-bar-actions-host/admin-top-bar-actions-host';
 import enDict from '@/core/app/presentation/i18n/en';
 import { withQueryClient } from '../../../../../../.storybook/decorators/with-query-client';
 import { appsQueryKey } from '@/core/app/presentation/hooks/use-apps/useApps.hook';

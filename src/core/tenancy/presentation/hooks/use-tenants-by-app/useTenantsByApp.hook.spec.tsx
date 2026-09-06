@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Component, Suspense } from 'react';
 import type { ReactNode } from 'react';
 
 vi.mock('@/core/tenancy/infrastructure/repositories/graphql/tenancy.gql.repository', () => ({
@@ -16,9 +17,26 @@ vi.mock('@/core/tenancy/infrastructure/repositories/graphql/tenancy.gql.reposito
 import { useTenantsByApp } from './useTenantsByApp.hook';
 import { tenancyGqlRepository } from '@/core/tenancy/infrastructure/repositories/graphql/tenancy.gql.repository';
 
+class TestErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state: { error: Error | null } = { error: null };
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+  render() {
+    if (this.state.error) return <div>error boundary: {this.state.error.message}</div>;
+    return this.props.children;
+  }
+}
+
 function wrapper({ children }: { children: ReactNode }) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TestErrorBoundary>
+        <Suspense fallback={<div>loading</div>}>{children}</Suspense>
+      </TestErrorBoundary>
+    </QueryClientProvider>
+  );
 }
 
 describe('useTenantsByApp', () => {
@@ -36,10 +54,11 @@ describe('useTenantsByApp', () => {
     expect(tenancyGqlRepository.listTenantsByApp).toHaveBeenCalledWith('app-1', undefined);
   });
 
-  it('is disabled when appId is empty', () => {
-    const { result: hookResult } = renderHook(() => useTenantsByApp(''), { wrapper });
+  it('throws to the nearest error boundary when the query fails', async () => {
+    vi.mocked(tenancyGqlRepository.listTenantsByApp).mockRejectedValue(new Error('boom'));
 
-    expect(hookResult.current.fetchStatus).toBe('idle');
-    expect(tenancyGqlRepository.listTenantsByApp).not.toHaveBeenCalled();
+    renderHook(() => useTenantsByApp('app-1'), { wrapper });
+
+    expect(await screen.findByText('error boundary: boom')).toBeInTheDocument();
   });
 });
