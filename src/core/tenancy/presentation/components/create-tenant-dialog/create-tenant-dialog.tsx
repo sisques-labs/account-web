@@ -15,7 +15,7 @@ import { Input } from '@/shared/presentation/components/ui/input/input';
 import { FormField } from '@/shared/presentation/components/ui/form-field/form-field';
 import { Alert } from '@/shared/presentation/components/ui/alert/alert';
 import { createTenantSchema, type CreateTenantSchema } from '@/core/tenancy/presentation/schemas/create-tenant.schema';
-import { useCreateTenant } from '@/core/tenancy/presentation/hooks/use-create-tenant/useCreateTenant.hook';
+import { useCreateTenantDialog } from '@/core/tenancy/presentation/hooks/use-create-tenant-dialog/useCreateTenantDialog.hook';
 import type { TenancyDict } from '@/core/tenancy/presentation/i18n/en';
 import type { WidenStringLiterals } from '@/shared/presentation/i18n/widen-literals';
 
@@ -27,34 +27,20 @@ export interface CreateTenantDialogProps {
 }
 
 function CreateTenantDialog({ dict, appId, open, onOpenChange }: CreateTenantDialogProps) {
-  const createTenant = useCreateTenant(appId);
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
   } = useForm<CreateTenantSchema>({ resolver: zodResolver(createTenantSchema) });
+  const createTenant = useCreateTenantDialog({ appId, onOpenChange, reset });
 
   const onSubmit = handleSubmit((data) => {
-    createTenant.mutate(
-      { appId, name: data.name },
-      {
-        onSuccess: () => {
-          reset();
-          onOpenChange(false);
-        },
-      },
-    );
+    createTenant.submit(data.name);
   });
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        if (!next) reset();
-        onOpenChange(next);
-      }}
-    >
+    <Dialog open={open} onOpenChange={createTenant.onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{dict.createTenantDialog.title}</DialogTitle>
