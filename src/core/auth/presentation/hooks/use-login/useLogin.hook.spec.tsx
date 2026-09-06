@@ -10,6 +10,13 @@ vi.mock('@/shared/infrastructure/store/session.store', () => ({
   useSessionStore: { getState: vi.fn() },
 }));
 
+const push = vi.fn();
+let mockSearchParams = new URLSearchParams();
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push }),
+  useSearchParams: () => mockSearchParams,
+}));
+
 import { AxiosError, AxiosHeaders } from 'axios';
 import { useLogin } from './useLogin.hook';
 import { authRestRepository } from '@/core/auth/infrastructure/repositories/rest/auth.rest.repository';
@@ -34,6 +41,7 @@ function wrapper({ children }: { children: ReactNode }) {
 describe('useLogin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSearchParams = new URLSearchParams();
     vi.mocked(useSessionStore.getState).mockReturnValue({
       accessToken: null,
       setAccessToken: vi.fn(),
@@ -47,32 +55,63 @@ describe('useLogin', () => {
   it('calls the repository with the submitted input and reports success', async () => {
     vi.mocked(authRestRepository.login).mockResolvedValue({ accessToken: 'access-tok' });
 
-    const { result } = renderHook(() => useLogin(enDict), { wrapper });
+    const { result } = renderHook(() => useLogin(enDict, 'en'), { wrapper });
     expect(result.current.isPending).toBe(false);
     expect(result.current.errorMessage).toBeNull();
 
     const input = { email: 'jane@example.com', password: 'Sup3rStrongPassw0rd!' };
-    result.current.mutate(input);
+    result.current.submit(input);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(authRestRepository.login).toHaveBeenCalledWith(input);
   });
 
-  it('surfaces isError and error on a rejected mutation', async () => {
+  it('redirects to the locale home on success by default', async () => {
+    vi.mocked(authRestRepository.login).mockResolvedValue({ accessToken: 'access-tok' });
+
+    const { result } = renderHook(() => useLogin(enDict, 'en'), { wrapper });
+    result.current.submit({ email: 'jane@example.com', password: 'Sup3rStrongPassw0rd!' });
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/en'));
+  });
+
+  it('redirects to a valid ?redirectTo= target instead of the locale home', async () => {
+    mockSearchParams = new URLSearchParams({ redirectTo: '/en/admin/apps' });
+    vi.mocked(authRestRepository.login).mockResolvedValue({ accessToken: 'access-tok' });
+
+    const { result } = renderHook(() => useLogin(enDict, 'en'), { wrapper });
+    result.current.submit({ email: 'jane@example.com', password: 'Sup3rStrongPassw0rd!' });
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/en/admin/apps'));
+  });
+
+  it('falls back to the locale home when ?redirectTo= is an unsafe absolute URL', async () => {
+    mockSearchParams = new URLSearchParams({ redirectTo: 'https://evil.com/phishing' });
+    vi.mocked(authRestRepository.login).mockResolvedValue({ accessToken: 'access-tok' });
+
+    const { result } = renderHook(() => useLogin(enDict, 'en'), { wrapper });
+    result.current.submit({ email: 'jane@example.com', password: 'Sup3rStrongPassw0rd!' });
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/en'));
+    expect(push).not.toHaveBeenCalledWith('https://evil.com/phishing');
+  });
+
+  it('surfaces isError and error on a rejected mutation, without redirecting', async () => {
     vi.mocked(authRestRepository.login).mockRejectedValue(new Error('invalid credentials'));
 
-    const { result } = renderHook(() => useLogin(enDict), { wrapper });
-    result.current.mutate({ email: 'jane@example.com', password: 'wrong' });
+    const { result } = renderHook(() => useLogin(enDict, 'en'), { wrapper });
+    result.current.submit({ email: 'jane@example.com', password: 'wrong' });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error).toEqual(new Error('invalid credentials'));
+    expect(push).not.toHaveBeenCalled();
   });
 
   it('derives the invalid-credentials message from a 401 error', async () => {
     vi.mocked(authRestRepository.login).mockRejectedValue(make401Error());
 
-    const { result } = renderHook(() => useLogin(enDict), { wrapper });
-    result.current.mutate({ email: 'jane@example.com', password: 'wrong' });
+    const { result } = renderHook(() => useLogin(enDict, 'en'), { wrapper });
+    result.current.submit({ email: 'jane@example.com', password: 'wrong' });
 
     await waitFor(() => expect(result.current.errorMessage).toBe(enDict.login.errors.invalidCredentials));
   });
@@ -80,8 +119,8 @@ describe('useLogin', () => {
   it('derives a generic message from a non-401 error', async () => {
     vi.mocked(authRestRepository.login).mockRejectedValue(new Error('boom'));
 
-    const { result } = renderHook(() => useLogin(enDict), { wrapper });
-    result.current.mutate({ email: 'jane@example.com', password: 'wrong' });
+    const { result } = renderHook(() => useLogin(enDict, 'en'), { wrapper });
+    result.current.submit({ email: 'jane@example.com', password: 'wrong' });
 
     await waitFor(() => expect(result.current.errorMessage).toBe(enDict.login.errors.generic));
   });

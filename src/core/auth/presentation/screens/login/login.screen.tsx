@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginSchema } from '@/core/auth/presentation/schemas/login.schema';
@@ -9,7 +8,6 @@ import { useLogin } from '@/core/auth/presentation/hooks/use-login/useLogin.hook
 import type { AuthDict } from '@/core/auth/presentation/i18n/en';
 import type { WidenStringLiterals } from '@/shared/presentation/i18n/widen-literals';
 import type { Locale } from '@/shared/presentation/i18n/locale';
-import { getSafeRedirectPath } from '@/shared/lib/safe-redirect';
 
 type LoginDict = WidenStringLiterals<AuthDict>;
 import { Button } from '@/shared/presentation/components/ui/button/button';
@@ -26,27 +24,15 @@ export interface LoginScreenProps {
 }
 
 export function LoginScreen({ dict, lang }: LoginScreenProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const loginMutation = useLogin(dict);
+  const loginMutation = useLogin(dict, lang);
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<LoginSchema>({ resolver: zodResolver(loginSchema) });
 
-  // Honors a same-origin `?redirectTo=` (e.g. sent here by AdminShell when
-  // an unauthenticated visitor hits /admin/*) so login sends them back
-  // where they were headed instead of always landing on the locale home.
-  // getSafeRedirectPath rejects anything that isn't a same-origin relative
-  // path, so this can't be turned into an open redirect via the query string.
   const onSubmit = handleSubmit((data) => {
-    loginMutation.mutate(data, {
-      onSuccess: () => {
-        const redirectTo = getSafeRedirectPath(searchParams.get('redirectTo'));
-        router.push(redirectTo ?? `/${lang}`);
-      },
-    });
+    loginMutation.submit(data);
   });
 
   return (

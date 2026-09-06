@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { registerSchema, type RegisterSchema } from '@/core/auth/presentation/schemas/register.schema';
@@ -25,8 +24,7 @@ export interface RegisterScreenProps {
 }
 
 export function RegisterScreen({ dict, lang }: RegisterScreenProps) {
-  const router = useRouter();
-  const registerMutation = useRegister(dict);
+  const registerMutation = useRegister(dict, lang);
   const {
     register,
     handleSubmit,
@@ -34,10 +32,7 @@ export function RegisterScreen({ dict, lang }: RegisterScreenProps) {
   } = useForm<RegisterSchema>({ resolver: zodResolver(registerSchema) });
 
   const onSubmit = handleSubmit((data) => {
-    registerMutation.mutate(
-      { ...data, displayName: data.displayName || undefined },
-      { onSuccess: () => router.push(`/${lang}/login`) },
-    );
+    registerMutation.submit(data);
   });
 
   return (

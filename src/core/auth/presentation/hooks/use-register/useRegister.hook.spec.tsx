@@ -7,6 +7,11 @@ vi.mock('@/core/auth/infrastructure/repositories/rest/auth.rest.repository', () 
   authRestRepository: { register: vi.fn(), login: vi.fn() },
 }));
 
+const push = vi.fn();
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push }),
+}));
+
 import { AxiosError, AxiosHeaders } from 'axios';
 import { useRegister } from './useRegister.hook';
 import { authRestRepository } from '@/core/auth/infrastructure/repositories/rest/auth.rest.repository';
@@ -35,32 +40,52 @@ describe('useRegister', () => {
   it('calls the repository with the submitted input and reports success', async () => {
     vi.mocked(authRestRepository.register).mockResolvedValue({ id: 'user-1' });
 
-    const { result } = renderHook(() => useRegister(enDict), { wrapper });
+    const { result } = renderHook(() => useRegister(enDict, 'en'), { wrapper });
     expect(result.current.isPending).toBe(false);
     expect(result.current.errorMessage).toBeNull();
 
-    const input = { email: 'jane@example.com', password: 'Sup3rStrongPassw0rd!', displayName: 'Jane' };
-    result.current.mutate(input);
+    result.current.submit({ email: 'jane@example.com', password: 'Sup3rStrongPassw0rd!', displayName: 'Jane' });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(authRestRepository.register).toHaveBeenCalledWith(input);
+    expect(authRestRepository.register).toHaveBeenCalledWith({
+      email: 'jane@example.com',
+      password: 'Sup3rStrongPassw0rd!',
+      displayName: 'Jane',
+    });
   });
 
-  it('surfaces isError and error on a rejected mutation', async () => {
+  it('normalizes a blank display name to undefined and redirects to login on success', async () => {
+    vi.mocked(authRestRepository.register).mockResolvedValue({ id: 'user-1' });
+
+    const { result } = renderHook(() => useRegister(enDict, 'en'), { wrapper });
+    result.current.submit({ email: 'jane@example.com', password: 'Sup3rStrongPassw0rd!', displayName: '' });
+
+    await waitFor(() =>
+      expect(authRestRepository.register).toHaveBeenCalledWith({
+        email: 'jane@example.com',
+        password: 'Sup3rStrongPassw0rd!',
+        displayName: undefined,
+      }),
+    );
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/en/login'));
+  });
+
+  it('surfaces isError and error on a rejected mutation, without redirecting', async () => {
     vi.mocked(authRestRepository.register).mockRejectedValue(new Error('email already registered'));
 
-    const { result } = renderHook(() => useRegister(enDict), { wrapper });
-    result.current.mutate({ email: 'jane@example.com', password: 'Sup3rStrongPassw0rd!' });
+    const { result } = renderHook(() => useRegister(enDict, 'en'), { wrapper });
+    result.current.submit({ email: 'jane@example.com', password: 'Sup3rStrongPassw0rd!' });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error).toEqual(new Error('email already registered'));
+    expect(push).not.toHaveBeenCalled();
   });
 
   it('derives the email-already-registered message from a 409 error', async () => {
     vi.mocked(authRestRepository.register).mockRejectedValue(make409Error());
 
-    const { result } = renderHook(() => useRegister(enDict), { wrapper });
-    result.current.mutate({ email: 'jane@example.com', password: 'Sup3rStrongPassw0rd!' });
+    const { result } = renderHook(() => useRegister(enDict, 'en'), { wrapper });
+    result.current.submit({ email: 'jane@example.com', password: 'Sup3rStrongPassw0rd!' });
 
     await waitFor(() =>
       expect(result.current.errorMessage).toBe(enDict.register.errors.emailAlreadyRegistered),
@@ -70,8 +95,8 @@ describe('useRegister', () => {
   it('derives a generic message from a non-409 error', async () => {
     vi.mocked(authRestRepository.register).mockRejectedValue(new Error('boom'));
 
-    const { result } = renderHook(() => useRegister(enDict), { wrapper });
-    result.current.mutate({ email: 'jane@example.com', password: 'Sup3rStrongPassw0rd!' });
+    const { result } = renderHook(() => useRegister(enDict, 'en'), { wrapper });
+    result.current.submit({ email: 'jane@example.com', password: 'Sup3rStrongPassw0rd!' });
 
     await waitFor(() => expect(result.current.errorMessage).toBe(enDict.register.errors.generic));
   });
