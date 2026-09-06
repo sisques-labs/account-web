@@ -1,6 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { isAxiosError } from 'axios';
 import { LoginUseCase } from '@/core/auth/application/use-cases/login/login.use-case';
 import { authRestRepository } from '@/core/auth/infrastructure/repositories/rest/auth.rest.repository';
 import { LoginInput } from '@/core/auth/domain/interfaces/login-input.interface';
@@ -8,17 +7,14 @@ import type { AuthDict } from '@/core/auth/presentation/i18n/en';
 import type { WidenStringLiterals } from '@/shared/presentation/i18n/widen-literals';
 import type { Locale } from '@/shared/presentation/i18n/locale';
 import { getSafeRedirectPath } from '@/shared/lib/safe-redirect';
+import { getAxiosErrorMessage } from '@/shared/lib/get-axios-error-message';
 
 const loginUseCase = new LoginUseCase(authRestRepository);
 
 type LoginDict = WidenStringLiterals<AuthDict>;
 
 function getErrorMessage(error: unknown, dict: LoginDict): string | null {
-  if (!error) return null;
-  if (isAxiosError(error) && error.response?.status === 401) {
-    return dict.login.errors.invalidCredentials;
-  }
-  return dict.login.errors.generic;
+  return getAxiosErrorMessage(error, { 401: dict.login.errors.invalidCredentials }, dict.login.errors.generic);
 }
 
 /**
