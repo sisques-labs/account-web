@@ -1,5 +1,5 @@
 /* =============================================================================
-   Design System — Theme  (Tailwind v4, corrected)
+   Design System — Theme  (Tailwind v4)
    ─────────────────────────────────────────────────────────────────────────────
    ARCHITECTURE
    ┌──────────────┬──────────────────────────────────────────────────────────┐
@@ -14,10 +14,17 @@
    └──────────────┴──────────────────────────────────────────────────────────┘
 
    WHY @theme inline MATTERS
-   • @theme (plain) → Tailwind bakes the oklch() value into --color-* on :root.
+   • @theme (plain) → Tailwind bakes the value into --color-* on :root.
      Overriding --forest in palettes.css has NO effect on bg-forest utility.
    • @theme inline  → --color-forest: var(--forest). Override --forest anywhere
      in the cascade and every Tailwind utility + shadcn component picks it up.
+
+   BRAND
+   Token *names* below are unchanged from the template (--forest, --ink, --paper …)
+   — dozens of components (button-variants.ts, entity-row.tsx, …) reference these
+   bare vars directly. Only the *values* were repainted to the Sisques Account
+   canvas identity (blue/slate, see design-import/colors.css): --forest is now the
+   brand blue scale, --paper/--ink are the slate neutral scale, etc.
    ============================================================================= */
 
 /* ─── 1. Source of truth — bare tokens ──────────────────────────────────────
@@ -25,42 +32,46 @@
    components.css and globals.css reference these directly as var(--paper) etc.
    ─────────────────────────────────────────────────────────────────────────── */
 :root {
-  /* Paper (background surfaces) */
-  --paper:       oklch(0.96 0.018 80);
-  --paper-2:     oklch(0.93 0.022 80);
-  --paper-3:     oklch(0.88 0.028 80);
+  /* Paper (background surfaces) — canvas surface-page / surface-sunken / slate-100 */
+  --paper:       #f8fafc; /* slate-25 */
+  --paper-2:     #f1f5f9; /* slate-50 */
+  --paper-3:     #e2e8f0; /* slate-100 */
 
-  /* Ink (text) */
-  --ink:         oklch(0.22 0.025 60);
-  --ink-2:       oklch(0.38 0.03  60);
-  --ink-3:       oklch(0.55 0.02  60);
+  /* Ink (text) — canvas text-primary / text-secondary / text-tertiary */
+  --ink:         #1e293b; /* slate-800 */
+  --ink-2:       #475569; /* slate-500 */
+  --ink-3:       #64748b; /* slate-400 */
 
-  /* Rule (borders / dividers) */
-  --rule:        oklch(0.78 0.03  70);
+  /* Rule (borders / dividers) — canvas border-default */
+  --rule:        #cbd5e1; /* slate-200 */
 
-  /* Forest — primary brand */
-  --forest:      oklch(0.42 0.07  145);
-  --forest-2:    oklch(0.55 0.08  145);
-  --forest-3:    oklch(0.72 0.07  145);
-  --forest-bg:   oklch(0.92 0.03  140);
+  /* Forest — primary brand, canvas primary blue scale */
+  --forest:      #2563eb; /* blue-600 — color-primary */
+  --forest-2:    #1d4ed8; /* blue-700 — color-primary-hover */
+  --forest-3:    #60a5fa; /* blue-400 — lighter accent */
+  --forest-bg:   #eff6ff; /* blue-50 — color-primary-subtle */
 
-  /* Accent colours */
-  --honey:       oklch(0.74 0.12  75);
-  --honey-2:     oklch(0.62 0.13  65);
-  --terracotta:  oklch(0.62 0.13  35);
-  --sage:        oklch(0.78 0.04  130);
-  --plum:        oklch(0.48 0.08  340);
-  --sky:         oklch(0.68 0.07  230);
+  /* Accent colours — derived from the canvas's green/amber/blue scales
+     (the canvas defines fewer accents than the template; honey/sage/sky
+     map onto amber/green/blue, terracotta onto red, plum has no real
+     usage in this codebase beyond the unused avatar/chip palette so it
+     gets a neutral-adjacent violet-leaning slate value). */
+  --honey:       #d97706; /* amber-600 */
+  --honey-2:     #b45309; /* amber-700 (derived, darker step) */
+  --terracotta:  #dc2626; /* red-600 — color-danger */
+  --sage:        #16a34a; /* green-600 */
+  --plum:        #475569; /* slate-500 — unused elsewhere, neutral-adjacent */
+  --sky:         #3b82f6; /* blue-500 */
 
   /* Surface tints (chip / tag backgrounds) */
-  --honey-bg:    oklch(0.96 0.04  75);
-  --terra-bg:    oklch(0.94 0.04  35);
-  --sage-bg:     oklch(0.94 0.03  130);
-  --plum-bg:     oklch(0.92 0.03  340);
-  --sky-bg:      oklch(0.93 0.03  230);
+  --honey-bg:    #fef3c7; /* amber-100 */
+  --terra-bg:    #fef2f2; /* red-50 */
+  --sage-bg:     #f0fdf4; /* green-50 */
+  --plum-bg:     #f1f5f9; /* slate-50 */
+  --sky-bg:      #eff6ff; /* blue-50 */
 
   /* Static */
-  --white:       oklch(1 0 0);
+  --white:       #ffffff;
 }
 
 /* ─── 2. Tailwind v4 token registration ─────────────────────────────────────
@@ -113,9 +124,16 @@
   /* ── Fonts ──
      Fallback stacks guarantee text renders before Next.js injects its var.
      @theme inline outputs --font-* as CSS props on :root, so components.css
-     can still use var(--font-sans) / var(--font-serif) etc. directly.        */
-  --font-serif:  var(--font-newsreader),    "Source Serif Pro", Georgia, serif;
-  --font-sans:   var(--font-dm-sans),       -apple-system, "Segoe UI", sans-serif;
-  --font-hand:   var(--font-caveat),        "Bradley Hand", cursive;
+     can still use var(--font-sans) / var(--font-serif) etc. directly.
+
+     The canvas brand only defines Inter (sans) + JetBrains Mono — there is no
+     serif or hand-drawn face. --font-serif/--font-hand are kept (rather than
+     removed) because several shared UI atoms still reference them, but both
+     now point at the same Inter sans stack so nothing regresses to a missing
+     font. See components.css .headline for the simplified heading treatment
+     that replaces the old serif headline style.                              */
+  --font-serif:  var(--font-inter),         -apple-system, "Segoe UI", sans-serif;
+  --font-sans:   var(--font-inter),         -apple-system, "Segoe UI", sans-serif;
+  --font-hand:   var(--font-inter),         -apple-system, "Segoe UI", sans-serif;
   --font-mono:   var(--font-jetbrains-mono), ui-monospace, monospace;
 }

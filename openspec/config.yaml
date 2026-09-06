@@ -34,12 +34,19 @@ conventions:
     use_cases: "{name}.use-case.ts — file; class exported as {Name}UseCase. Lives in application/use-cases/{name}/."
     repository_ports: "{name}.repository.port.ts"
     repositories: |
-      GQL (current standard):
+      GQL (for a GraphQL-backed context):
         repository: infrastructure/repositories/graphql/{context}.gql.repository.ts
         queries:   infrastructure/repositories/graphql/queries/{operation-name}.query.ts
         mutations: infrastructure/repositories/graphql/mutations/{operation-name}.mutation.ts
         class: {Context}GqlRepository implements I{Context}Repository
         singleton export: {context}GqlRepository
+      REST (for a REST-backed context, e.g. auth):
+        repository: infrastructure/repositories/rest/{context}.rest.repository.ts
+        class: {Context}RestRepository implements I{Context}Repository
+        singleton export: {context}RestRepository
+        no queries/mutations subfolders — those are GraphQL-document concepts;
+        each method builds its request inline using the shared `http` axios instance
+        tests: {context}.rest.repository.spec.ts — mock the shared `http` instance directly (vi.mock)
     screens: "{name}.screen.tsx — file name; component exported as {Name}Screen (PascalCase). No schemas, no business logic inline — import from schemas/ and hooks/."
     skeletons: |
       {name}-skeleton/{name}-skeleton.tsx — loading skeleton for a screen or list.
@@ -70,6 +77,11 @@ conventions:
         mutations/{operation}.mutation.ts ← gql`` document, named export
         {context}.gql.repository.ts       ← implements port, imports from queries/ + mutations/
         {context}.gql.repository.spec.ts  ← unit tests; mock apolloClient directly (vi.mock)
+    rest_repos: |
+      src/core/{context}/infrastructure/repositories/rest/
+        {context}.rest.repository.ts       ← implements port, builds each request inline via the shared `http` axios instance
+        {context}.rest.repository.spec.ts  ← unit tests; mock the shared `http` instance directly (vi.mock)
+      Used when the upstream API for this context is REST, not GraphQL (see `auth`).
     shared_providers: "src/shared/presentation/providers/ — provider aggregator"
   layers:
     domain:
@@ -81,12 +93,13 @@ conventions:
       - ports/ — repository interfaces
       - interfaces/ — application-level input/output interfaces (e.g. use-case input DTOs)
       - Use-case classes take repository via constructor; exported as module singletons
-      - Class name: {Name}UseCase. File name: {name}.use-case.ts
+      - "Class name: {Name}UseCase. File name: {name}.use-case.ts"
       - No framework imports (no React, no Zustand direct) — reads/writes store via getState()
     infrastructure:
-      - repositories/graphql/ — Apollo GQL implementations of ports (current standard)
+      - repositories/graphql/ — Apollo GQL implementations of ports, for GraphQL-backed contexts
       - repositories/graphql/queries/ — gql document files ({name}.query.ts), one per query
       - repositories/graphql/mutations/ — gql document files ({name}.mutation.ts), one per mutation
+      - repositories/rest/ — axios REST implementations of ports, for REST-backed contexts (e.g. auth); no queries/mutations subfolders
       - store/ — Zustand stores (framework-coupled, lives here not in application)
       - http/ — shared HTTP utilities (axios client, Apollo client, refresh mutex) — cross-cutting, lives in shared/
     presentation:

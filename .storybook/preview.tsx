@@ -10,9 +10,7 @@ import { withQueryClient } from "./decorators/with-query-client";
 const FontVars = () => (
   <style>{`
     :root {
-      --font-newsreader: "Newsreader", "Source Serif Pro", Georgia, serif;
-      --font-dm-sans: "DM Sans", -apple-system, "Segoe UI", sans-serif;
-      --font-caveat: "Caveat", "Bradley Hand", cursive;
+      --font-inter: "Inter", -apple-system, "Segoe UI", sans-serif;
       --font-jetbrains-mono: "JetBrains Mono", ui-monospace, monospace;
     }
   `}</style>
