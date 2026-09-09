@@ -1,144 +1,190 @@
-# Verification Report: cross-domain-redirect-allowlist (PR 2 of 3 - independent slice review)
+# Verification Report: cross-domain-redirect-allowlist (FINAL — whole-change gate, PR 3 of 3)
 
-**Scope**: `getSafeExternalRedirectUrl` helper only (Phase 2 / tasks 2.1-2.2). Phase 3
-(env wiring + `useLogin` chain) and Phase 4 (final regression/coverage/lint/tsc
-gate) are not yet implemented - expected and out of scope for this pass. This
-report does NOT close the change; Phase 3/4 remain pending for a subsequent
-verify pass.
+**Scope**: This report supersedes the prior PR2-only report for the final
+verdict but does not erase its findings — see "Carried-forward findings"
+below. This pass covers Phase 3 (env wiring + `useLogin` selection chain +
+`.env.example`) and Phase 4 (full regression, coverage, lint, tsc, build),
+and independently re-verifies PR1 (`trusted-origins.ts`) and PR2
+(`safe-external-redirect.ts`) are present, untouched, and still green.
 
-## Completeness (this slice)
+## Task Completeness
+
+All tasks in `tasks.md` are checked `[x]` across all 4 phases (1.1–1.2,
+2.1–2.2, 3.1–3.4, 4.1–4.4). Verified against actual code state, not just the
+checkbox:
 
 | Task | Status | Evidence |
 |---|---|---|
-| 2.1 RED spec | checked, matches code | `safe-external-redirect.spec.ts`, 15 cases, all runtime-passing |
-| 2.2 GREEN impl | checked, matches code | `safe-external-redirect.ts` implements design Decision 3 step order exactly |
+| 1.1/1.2 (parser) | done, matches code | `trusted-origins.ts`/`.spec.ts` present, byte-identical to PR1 commit `ef46df2` |
+| 2.1/2.2 (external helper) | done, matches code | `safe-external-redirect.ts`/`.spec.ts` present, byte-identical to PR2 commit `e000f97` (including the load-bearing control-char regression test added to close the PR2 WARNING) |
+| 3.1 (env.ts wiring) | done, matches code | see "env.ts wiring" below |
+| 3.2/3.3 (hook RED/GREEN) | done, matches code | see "useLogin selection chain" below |
+| 3.4 (.env.example) | done, unverifiable content | `.env.example` shows `M`, 7 lines changed (`git diff e000f97 --stat`); direct content read is denied by this session's `.env*` permission rule — see "Acknowledged gap" |
+| 4.1–4.4 | done | full regression/coverage/lint/tsc run below, plus `pnpm build` (config.yaml `rules.verify.build_command`) |
 
-`tasks.md` diff is exactly the two checkbox flips for 2.1/2.2 - no other line changed.
+## 1. `env.ts` wiring vs design Decision 1
 
-## Command Evidence
+```ts
+export const TRUSTED_REDIRECT_ORIGINS = parseTrustedOrigins(process.env.NEXT_PUBLIC_TRUSTED_REDIRECT_ORIGINS);
+```
+
+The literal string `process.env.NEXT_PUBLIC_TRUSTED_REDIRECT_ORIGINS` appears
+inline as a direct member-expression argument — not built via template
+string, concatenation, bracket-access, or a variable. This is statically
+analyzable by Next's build-time env inliner. Confirmed functionally: `pnpm
+build` output includes `Environments: .env`, i.e. the build successfully
+resolved and inlined the `.env` file's vars, consistent with this being a
+literal, not a dynamic, reference. Matches design Decision 1 exactly — no
+deviation.
+
+## 2. `useLogin.hook.ts` selection chain vs design Decision 4
+
+```ts
+const internalPath = getSafeRedirectPath(redirectTo);
+if (internalPath) { router.push(internalPath); return; }
+
+const externalUrl = getSafeExternalRedirectUrl(redirectTo, TRUSTED_REDIRECT_ORIGINS);
+if (externalUrl) { window.location.assign(externalUrl); return; }
+
+router.push(`/${lang}`);
+```
+
+- Order is exactly internal → external → fallback, matching design verbatim.
+- Each of the first two branches has an unconditional `return` immediately
+  after its navigation call, inside the same `if` block — there is no path
+  from "matched internal" to "also evaluates external," and no path from
+  "matched external" to "also falls through to home." The fallback `router
+  .push(`/${lang}`)` is reached only when both `if`s are skipped.
+- External branch calls `window.location.assign` (full document load, per
+  design's SSO-handoff rationale); internal and fallback branches both use
+  `router.push`. No branch mixes the two navigation primitives.
+- No deviation from design found.
+
+## 3. Existing 7 `useLogin.hook.spec.tsx` cases — genuinely unmodified
+
+Diffed the working tree against the PR2 commit (`git diff e000f97 -- .../useLogin.hook.spec.tsx`); the 7 original cases are present with their original assertions intact:
+
+1. `calls the repository with the submitted input and reports success` — unchanged.
+2. `redirects to the locale home on success by default` — unchanged (`push` → `/en`).
+3. `redirects to a valid ?redirectTo= target instead of the locale home` — unchanged (`push` → `/en/admin/apps`).
+4. `falls back to the locale home when ?redirectTo= is an unsafe absolute URL` — unchanged; still asserts `push('/en')` AND `push` never called with `'https://evil.com/phishing'`. This is the proposal's named regression-gate assertion (proposal.md "Regression gate") and it is intact, not weakened.
+5. `surfaces isError and error on a rejected mutation, without redirecting` — unchanged.
+6. `derives the invalid-credentials message from a 401 error` — unchanged.
+7. `derives a generic message from a non-401 error` — unchanged.
+
+None of the 7 assertions were loosened, removed, or given wider tolerances to accommodate the new code. The only additions to the file are: the `vi.mock('@/shared/config/env', ...)` block, the `afterEach(() => vi.unstubAllGlobals())`, and the 2 new `it` blocks (below).
+
+## 4. The 2 new test cases
+
+- `redirects via window.location.assign to an allowlisted external origin, without calling router.push` — sets `redirectTo=https://app.sisqueslabs.com/dashboard`, stubs `location.assign`, asserts `assign` called with that exact URL AND `push` never called. Correct polarity and correct ordering proof (external wins when internal validation would reject an absolute URL).
+- `redirects via router.push for a relative redirectTo, without calling window.location.assign` — sets `redirectTo=/en/admin/apps`, asserts `push` called with that path AND `assign` never called. Proves internal branch short-circuits before external is ever consulted.
+
+**Mock isolation check**: `vi.mock('@/shared/config/env', async (importOriginal) => ({ ...(await importOriginal<typeof import('@/shared/config/env')>()), TRUSTED_REDIRECT_ORIGINS: new Set(['https://app.sisqueslabs.com']) }))` — confirmed the spread of `importOriginal()` is real code, not just a comment/claim (read the actual file, line 12–15). This correctly preserves every other `env.ts` export (`GRAPHQL_URL`, `HTTP_TIMEOUT_MS`, `API_URL`) untouched while only overriding `TRUSTED_REDIRECT_ORIGINS`, so no other module-level env read in the graph breaks. `vi.stubGlobal('location', ...)` + `afterEach(() => vi.unstubAllGlobals())` correctly isolates the jsdom `location.assign` stub per-test (jsdom's real `assign` throws "Not implemented" per design's noted gotcha).
+
+## 5. Full Regression Run — actually executed, real output
 
 | Command | Result |
 |---|---|
-| `pnpm exec vitest run safe-external-redirect` | 1 file, 15/15 tests PASS |
-| `pnpm exec vitest run src/shared/lib/safe-redirect.spec.ts` (PR1 regression) | 1 file, 10/10 tests PASS, file byte-for-byte untouched |
-| `pnpm exec vitest run src/shared/lib/trusted-origins.spec.ts` (PR1 regression) | 1 file, 16/16 tests PASS |
-| `pnpm test:coverage` | 129 files, 630/630 tests PASS. Repo-wide: 97.65% stmts / 90.11% branch / 97.12% funcs / 98.46% lines - 80% threshold met. `safe-external-redirect.ts` isolated: 100/100/100/100 (19 stmts, 12 branches, 2 funcs, 13 lines) |
-| `pnpm lint` | 0 errors, 15 warnings - all pre-existing, in unrelated `shared/presentation/components/ui/*` files, none touching this slice |
+| `pnpm exec vitest run useLogin` | 1 file, **9/9 PASS** (7 original + 2 new) |
+| `pnpm exec vitest run trusted-origins` | 1 file, **16/16 PASS** |
+| `pnpm exec vitest run safe-external-redirect` | 1 file, **16/16 PASS** (15 original + 1 control-char regression test added in PR2's follow-up commit `e000f97`) |
+| `pnpm exec vitest run safe-redirect` | 1 file, **10/10 PASS** — same 10 cases as the pre-change baseline; ultimate regression gate for the whole 3-PR change holds |
+| `pnpm test:coverage` | **129 files / 633 tests PASS.** Repo-wide: 97.69% stmts / 90.18% branch / 97.12% funcs / 98.49% lines — all above the 80% threshold. No file under this change appears in the uncovered-lines table. |
+| `pnpm lint` | **0 errors**, 15 warnings — all pre-existing, all in unrelated `shared/presentation/components/ui/*` files (unused imports, one React Compiler skip note on `table.tsx`), none touching this change's files |
 | `pnpm tsc --noEmit` | clean, no output |
-| `git status --short` | `M tasks.md`, `?? safe-external-redirect.ts`, `?? safe-external-redirect.spec.ts` (+ unrelated `.atl/` tool dir). `safe-redirect.ts`/`.spec.ts`, `trusted-origins.ts`/`.spec.ts`, `env.ts`, `useLogin.hook.ts` all absent from status - confirmed untouched |
-| byte scan of both new files | No stray control bytes (0x00-0x1F excl. LF), no NUL, no leftover regex hex-escape artifact. Files are byte-clean |
+| `pnpm build` (config.yaml `rules.verify.build_command`) | **Compiled successfully**, all 21 routes generated, TypeScript pass embedded in build succeeded, `Environments: .env` confirms build-time env resolution ran |
 
-## Algorithm Compliance vs. design.md Decision 3
+Test count grew from PR2's reported 630 to 633 (env.ts/useLogin wiring added 3 net new runtime assertions: 2 new `useLogin` cases + the trusted-origins/safe-external-redirect counts were already included in PR2's 630). All previously-green suites remain green; nothing regressed.
 
-| Step | Design requirement | Implementation | Verdict |
+## 6. Spec Requirement → Test Cross-Check (`specs/cross-domain-redirect/spec.md`)
+
+| Requirement | Scenario | Covering test(s) | Verdict |
 |---|---|---|---|
-| 1 | Falsy `target` -> `null` | `if (!target) return null;` | PASS |
-| 2 | Reject raw C0 (U+0000-U+0020) or backslash BEFORE parsing | `hasForbiddenRawChar` loops `charCodeAt`, checks `code <= 0x20 or raw[i] === backslash`, called before `new URL` | PASS (logic correct; see WARNING on test proof below) |
-| 3 | `new URL(target)` try/catch -> `null`, no base arg | Exact match, no second constructor argument, relative paths therefore throw and return `null` | PASS |
-| 4 | Reject opaque origin (`url.origin === 'null'`) | Present, correct string literal `'null'` | PASS |
-| 5 | Exact `allowedOrigins.has(url.origin)`, no suffix/substring matching | `Set.has` only; no `.endsWith`/`.includes`/regex anywhere in the file | PASS |
-| 6 | Return `url.toString()` | Present | PASS |
+| Exact-Origin Allowlist Validation | Exact match against the allowlist | `trusted-origins.spec.ts::parses a single origin` (parse-side) + `safe-external-redirect.spec.ts::returns the normalized URL for an allowlisted origin` (consume-side) | PASS |
+| Exact-Origin Allowlist Validation | Subdomain of an allowlisted origin is rejected | `safe-external-redirect.spec.ts::returns null for a subdomain of an allowlisted origin` | PASS |
+| Exact-Origin Allowlist Validation | Unset or empty allowlist trusts nothing | `trusted-origins.spec.ts::returns an empty Set for undefined` / `...for an empty string`; consumed by `safe-external-redirect.spec.ts` empty-allowlist case | PASS |
+| Exact-Origin Allowlist Validation | Malformed candidate URL | `safe-external-redirect.spec.ts::returns null for a malformed URL without throwing` | PASS |
+| External Redirect Helper Contract | Allowlisted external target validates | `returns the normalized URL for an allowlisted origin` | PASS |
+| External Redirect Helper Contract | Non-allowlisted external target is rejected | `returns null for a non-allowlisted origin` | PASS |
+| External Redirect Helper Contract | Malformed target does not throw | `returns null for a malformed URL without throwing` | PASS |
+| External Redirect Helper Contract | Existing same-origin validator is unaffected | `safe-redirect.spec.ts` 10/10 unmodified, file byte-identical since before PR1 | PASS |
+| Login Redirect Selection Chain | Internal same-origin redirect wins first | `useLogin.hook.spec.tsx::redirects to a valid ?redirectTo= target instead of the locale home` (existing) + `...redirects via router.push for a relative redirectTo, without calling window.location.assign` (new, proves external is never consulted) | PASS |
+| Login Redirect Selection Chain | External allowlisted redirect used when not internal | `useLogin.hook.spec.tsx::redirects via window.location.assign to an allowlisted external origin, without calling router.push` (new) | PASS |
+| Login Redirect Selection Chain | Non-allowlisted external target falls back to locale home | `useLogin.hook.spec.tsx::falls back to the locale home when ?redirectTo= is an unsafe absolute URL` (existing, `evil.com`) | PASS |
+| Login Redirect Selection Chain | Absent redirectTo falls back to locale home | `useLogin.hook.spec.tsx::redirects to the locale home on success by default` (existing) | PASS |
 
-Order matches the design exactly; no steps reordered, skipped, or merged.
+All 12 scenarios across the spec's 3 requirements have a runtime-passing covering test. No requirement is asserted only by inspection.
 
-## Behavioral Compliance Matrix (spec.md - External Redirect Helper Contract)
+## 7. Known Limitations documentation check
 
-| Scenario | Covering test | Runtime result |
-|---|---|---|
-| Allowlisted external target validates | `returns the normalized URL for an allowlisted origin` | PASS |
-| Non-allowlisted external target is rejected | `returns null for a non-allowlisted origin` | PASS |
-| Malformed target does not throw | `returns null for a malformed URL without throwing` (asserts both `not.toThrow()` and `toBeNull()`) | PASS |
-| Existing same-origin validator is unaffected | `safe-redirect.spec.ts` 10/10 unmodified + file untouched in git status | PASS |
+`design.md`'s "Known Limitations" section (Login CSRF; Trusted-destination
+phishing) and `proposal.md`'s "Out of Scope / Known Limitations" section both
+name these as **pre-existing gaps outside the threat model of both mechanisms**,
+with a one-line rationale for each and, for login CSRF, an explicit pointer to
+what a real mitigation would require ("a pre-session token on the login form
+itself — separate work"). This reads as an intentional, reasoned scope
+boundary recorded at design time, not an item silently dropped from tasks —
+neither appears in `tasks.md` as an unchecked or missing task, and both are
+mirrored verbatim in `specs/cross-domain-redirect/spec.md`'s "Out of Scope"
+section. No action needed.
 
-Adversarial cases required by this review, all present and correctly asserted:
+## Carried-forward findings from the PR2 report
 
-| Input | Expected | Confirmed |
-|---|---|---|
-| `https://evil.com/phishing` | null | yes |
-| `https://evil.app.sisqueslabs.com` vs allowlisted `https://app.sisqueslabs.com` | null (subdomain) | yes |
-| `https://app.sisqueslabs.com:8443` (port) | null | yes |
-| `http://app.sisqueslabs.com` (scheme) | null | yes |
-| `javascript:alert(1)`, `data:text/html,x` | null | yes |
-| backslash-scheme trick (`https:` + backslash + `app.sisqueslabs.com`) | null | yes - confirmed via mutation test this assertion is load-bearing (see below) |
-| `/en/admin/apps` (relative path) | null | yes |
-| Empty allowlist vs. otherwise-valid URL | null | yes |
+The PR2 report's two WARNINGs are now resolved:
 
-## Byte-level source integrity (item 2 of task)
+1. **Control-char pre-parse branch untested** — resolved. Commit `e000f97`
+   added `returns null for a control character smuggled into an allowlisted
+   origin` using a genuine raw control byte (not a percent-encoded `%00`),
+   independently confirmed present in `safe-external-redirect.spec.ts` and
+   passing at runtime (line 62 per the grep above).
+2. **Threat Matrix `%00` row mislabeled** — resolved per `e000f97`'s commit
+   message ("Corrects design.md's Threat Matrix..."); the design.md Threat
+   Matrix table now reads consistently with the actual rejection mechanism
+   (verified by re-reading design.md's Threat Matrix in this pass — the
+   `%00` row and the separate literal-control-char row are both present and
+   distinctly labeled).
 
-Byte scan of both files: 2069 bytes (`safe-external-redirect.ts`) and
-2850 bytes (`safe-external-redirect.spec.ts`), zero bytes in 0x00-0x1F (excluding
-ordinary LF) or 0x7F. No stray NUL, no leftover regex hex-escape
-artifact. The final committed-to-working-tree files are clean; the control-char
-check is an explicit `charCodeAt` loop, not a regex, as the apply report
-claimed.
+No new CRITICAL or WARNING findings were introduced by the PR3 slice.
+
+## Acknowledged gap — not a finding
+
+This session's permission settings hard-deny Read/Edit/Bash access to any
+`.env*` path. `.env.example`'s content could not be directly inspected.
+Indirect evidence collected instead: `git status --porcelain` shows ` M
+.env.example`; `git diff e000f97 --stat` (whole-tree diff, not path-scoped)
+shows `.env.example | 7 +++++++` (7 insertions, matching the 7-line
+comment+var block design.md Decision 5 specifies); `pnpm build`'s
+`Environments: .env` line and the successful `TRUSTED_REDIRECT_ORIGINS`
+wiring both indicate the env file is syntactically valid and loadable. This
+is recorded as an acknowledged, unverifiable-by-this-session gap per the
+task's explicit instruction, not treated as a blocking CRITICAL/WARNING.
 
 ## Issues
 
-### WARNING - control-character pre-parse branch has no assertion proving it functions
+**CRITICAL**: None.
 
-The `code <= 0x20` half of `hasForbiddenRawChar`'s OR condition is never
-exercised as `true` by any of the 15 tests. Verified two ways:
+**WARNING**: None new. (Both PR2 WARNINGs are resolved — see above.)
 
-1. **Mutation test** (isolated re-implementation, not a source edit): removing
-   the `code <= 0x20` clause and keeping only the backslash check, then
-   replaying all 15 test inputs against both branches, produces byte-identical
-   results for every case, including the one named "control character
-   smuggled into an allowlisted origin" (`https://app.sisqueslabs.com%00.evil.com`).
-2. **Root cause**: that test's payload is the literal ASCII text `%00`, not an
-   actual control byte - `hasForbiddenRawChar` never returns `true` for it
-   (none of its chars are <= 0x20 or a backslash). It is rejected downstream by
-   `new URL()`'s own `try/catch` in step 3, because a percent-decoded NUL in a
-   hostname is a forbidden host code point per the WHATWG URL Standard (node
-   confirms: `new URL('https://x.com%00.y.com')` throws `Invalid URL` on its
-   own, no pre-check needed).
-3. v8 branch coverage still reports 100% (12/12) for this file - coverage
-   tooling counts "both sides of the OR were reached," not "the left operand
-   ever evaluated to true," so it cannot see this gap. This is exactly the
-   kind of gap coverage percentage alone cannot catch.
-4. **This is not a demonstrated exploit** in the current call pattern: the
-   function always navigates using its own re-serialized `url.toString()`
-   output rather than the raw input, and WHATWG's own host-validation (via
-   `new URL()`) independently rejects the concrete `%00`-in-host and literal-
-   NUL cases tested by hand (`new URL('https://x.com .y.com')` with an
-   embedded space also throws directly). No input was found, by hand or via
-   node's real `URL` parser, that turns the missing `code <= 0x20` branch into
-   an actual origin-allowlist bypass. The gap is real but currently latent,
-   not exploitable through this code path today - this could change if a
-   future edit ever uses the raw `target` (instead of the parsed
-   `url.toString()`) anywhere, so the check is worth keeping and worth proving
-   with a real test.
-5. **Recommendation** (not applied - verify does not fix): add one test with a
-   genuine literal control byte (e.g. a raw tab, CR, or plain space embedded
-   mid-string, not a percent-encoded sequence) that specifically depends on
-   `hasForbiddenRawChar`'s `code <= 0x20` clause returning `true` before it
-   ever reaches `new URL()`. WHATWG explicitly strips ASCII tab/CR/LF from
-   input silently (confirmed: `new URL('https://x.com<TAB>.y.com')` does not
-   throw, it silently drops the tab and fuses the hostname segments) rather
-   than rejecting it, which is the actual scenario this line exists to guard
-   against, and it is currently unproven.
+**SUGGESTION**: None beyond what PR2 already recommended and which has since
+been applied.
 
-### WARNING - design.md Threat Matrix row is mislabeled
+## Final Verdict
 
-The row `https://app.sisqueslabs.com%00.evil.com` -> "Control char rejected
-pre-parse" in design.md's Threat Matrix is factually inaccurate: that string
-contains no raw control character (it is literal `%`, `0`, `0`), and it is not
-rejected by the pre-parse step. It is rejected by the `try/catch` around `new
-URL()` in step 3, for an unrelated reason (WHATWG's forbidden-host-code-point
-rule on percent-decoded hostnames). The test's own description inherits the
-same mislabeling. Recommend correcting the design doc row and/or adding a
-genuinely-raw-control-char test case, and relabeling the existing `%00` test to
-describe what it actually proves (URL-constructor rejection of a malformed
-host), not the pre-parse defense.
+**PASS.** The whole `cross-domain-redirect-allowlist` change (all 3 PRs) is
+verified-safe to consider done:
 
-No CRITICAL findings. No findings block committing this slice as-is; the two
-WARNINGs are test-coverage/documentation-accuracy gaps on a still-correct,
-still-safe implementation, not functional or security defects in the shipped
-code.
+- All 4 phases / all tasks complete and match code state.
+- All 3 layers (parser, external-redirect helper, login-chain wiring) trace
+  cleanly to design decisions with zero unexplained deviation.
+- All 12 spec scenarios across the spec's 3 requirements have a
+  runtime-passing covering test.
+- Full regression suite (633 tests, including the ultimate
+  `safe-redirect.spec.ts` 10/10 gate) passes; coverage, lint, tsc, and
+  production build are all clean.
+- Both issues raised in the PR2 interim report were independently confirmed
+  resolved in this pass, not just claimed resolved.
+- The one unverifiable item (`.env.example` content) is a pre-declared,
+  environment-imposed constraint, not a code or test gap, and is fully
+  bounded by indirect evidence.
 
-## Verdict
-
-**PASS WITH WARNINGS** for the PR2 slice (`getSafeExternalRedirectUrl` +
-its spec). Safe to commit/merge as-is. Overall change verification remains
-blocked pending Phase 3 (env wiring + `useLogin` chain) and Phase 4 (final
-regression gate), per tasks.md - that is expected at this point in the stack,
-not a defect of this slice.
+No fix is required before archive.

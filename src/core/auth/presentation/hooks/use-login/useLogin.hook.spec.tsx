@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
@@ -8,6 +8,10 @@ vi.mock('@/core/auth/infrastructure/repositories/rest/auth.rest.repository', () 
 }));
 vi.mock('@/shared/infrastructure/store/session.store', () => ({
   useSessionStore: { getState: vi.fn() },
+}));
+vi.mock('@/shared/config/env', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/shared/config/env')>()),
+  TRUSTED_REDIRECT_ORIGINS: new Set(['https://app.sisqueslabs.com']),
 }));
 
 const push = vi.fn();
@@ -52,6 +56,10 @@ describe('useLogin', () => {
     });
   });
 
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('calls the repository with the submitted input and reports success', async () => {
     vi.mocked(authRestRepository.login).mockResolvedValue({ accessToken: 'access-tok' });
 
@@ -94,6 +102,32 @@ describe('useLogin', () => {
 
     await waitFor(() => expect(push).toHaveBeenCalledWith('/en'));
     expect(push).not.toHaveBeenCalledWith('https://evil.com/phishing');
+  });
+
+  it('redirects via window.location.assign to an allowlisted external origin, without calling router.push', async () => {
+    const assign = vi.fn();
+    vi.stubGlobal('location', { ...window.location, assign });
+    mockSearchParams = new URLSearchParams({ redirectTo: 'https://app.sisqueslabs.com/dashboard' });
+    vi.mocked(authRestRepository.login).mockResolvedValue({ accessToken: 'access-tok' });
+
+    const { result } = renderHook(() => useLogin(enDict, 'en'), { wrapper });
+    result.current.submit({ email: 'jane@example.com', password: 'Sup3rStrongPassw0rd!' });
+
+    await waitFor(() => expect(assign).toHaveBeenCalledWith('https://app.sisqueslabs.com/dashboard'));
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it('redirects via router.push for a relative redirectTo, without calling window.location.assign', async () => {
+    const assign = vi.fn();
+    vi.stubGlobal('location', { ...window.location, assign });
+    mockSearchParams = new URLSearchParams({ redirectTo: '/en/admin/apps' });
+    vi.mocked(authRestRepository.login).mockResolvedValue({ accessToken: 'access-tok' });
+
+    const { result } = renderHook(() => useLogin(enDict, 'en'), { wrapper });
+    result.current.submit({ email: 'jane@example.com', password: 'Sup3rStrongPassw0rd!' });
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/en/admin/apps'));
+    expect(assign).not.toHaveBeenCalled();
   });
 
   it('surfaces isError and error on a rejected mutation, without redirecting', async () => {
