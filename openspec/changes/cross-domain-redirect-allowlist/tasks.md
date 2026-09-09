@@ -31,8 +31,8 @@ Chain strategy: pending
 
 ## Phase 2: External Redirect Helper (PR 2)
 
-- [ ] 2.1 RED: Write `src/shared/lib/safe-external-redirect.spec.ts` — cases: null/undefined/empty → null; allowlisted origin → normalized URL string; non-allowlisted `https://evil.com/phishing` → null; subdomain of allowlisted origin → null; different port → null; different scheme → null; malformed URL → null without throwing; relative path → null; `javascript:`/`data:` → null; backslash or control char pre-parse → null; empty allowlist → null for every input. Run `pnpm test src/shared/lib/safe-external-redirect.spec.ts`, confirm it fails.
-- [ ] 2.2 GREEN: Create `src/shared/lib/safe-external-redirect.ts` — `getSafeExternalRedirectUrl(target, allowedOrigins)` per design step order (falsy → null; reject C0/backslash; `new URL` try/catch → null; reject opaque `url.origin === 'null'`; exact `Set` membership check; return `url.toString()`). Confirm 2.1 passes.
+- [x] 2.1 RED: Write `src/shared/lib/safe-external-redirect.spec.ts` — cases: null/undefined/empty → null; allowlisted origin → normalized URL string; non-allowlisted `https://evil.com/phishing` → null; subdomain of allowlisted origin → null; different port → null; different scheme → null; malformed URL → null without throwing; relative path → null; `javascript:`/`data:` → null; backslash or control char pre-parse → null; empty allowlist → null for every input. Run `pnpm test src/shared/lib/safe-external-redirect.spec.ts`, confirm it fails.
+- [x] 2.2 GREEN: Create `src/shared/lib/safe-external-redirect.ts` — `getSafeExternalRedirectUrl(target, allowedOrigins)` per design step order (falsy → null; reject C0/backslash; `new URL` try/catch → null; reject opaque `url.origin === 'null'`; exact `Set` membership check; return `url.toString()`). Confirm 2.1 passes.
 
 ## Phase 3: Wiring & Login Chain (PR 3)
 
