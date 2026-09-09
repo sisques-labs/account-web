@@ -7,7 +7,9 @@ import type { AuthDict } from '@/core/auth/presentation/i18n/en';
 import type { WidenStringLiterals } from '@/shared/presentation/i18n/widen-literals';
 import type { Locale } from '@/shared/presentation/i18n/locale';
 import { getSafeRedirectPath } from '@/shared/lib/safe-redirect';
+import { getSafeExternalRedirectUrl } from '@/shared/lib/safe-external-redirect';
 import { getAxiosErrorMessage } from '@/shared/lib/get-axios-error-message';
+import { TRUSTED_REDIRECT_ORIGINS } from '@/shared/config/env';
 
 const loginUseCase = new LoginUseCase(authRestRepository);
 
@@ -18,12 +20,18 @@ function getErrorMessage(error: unknown, dict: LoginDict): string | null {
 }
 
 /**
- * On a successful login, honors a same-origin `?redirectTo=` (e.g. sent
- * here by useAdminGuard when an unauthenticated visitor hits /admin/*) so
- * the visitor lands back where they were headed instead of always on the
- * locale home. getSafeRedirectPath rejects anything that isn't a
- * same-origin relative path, so this can't become an open redirect via the
- * query string.
+ * On a successful login, resolves the post-login redirect destination by
+ * trying, in order: (1) an internal same-origin relative path (e.g. sent
+ * here by useAdminGuard when an unauthenticated visitor hits /admin/*) via
+ * `getSafeRedirectPath`, navigated with `router.push`; (2) an allowlisted
+ * external origin (a consumer app on another `sisqueslabs.com` origin,
+ * matched exactly — never a subdomain) via `getSafeExternalRedirectUrl`,
+ * navigated with `window.location.assign` because a cross-origin SSO
+ * handoff must be a full document load, not a soft client-side transition;
+ * (3) the current locale's home route as fallback via `router.push`. The
+ * first successful step wins — neither validator can turn the query string
+ * into an open redirect, since both reject anything outside their exact
+ * contract.
  */
 export function useLogin(dict: LoginDict, lang: Locale) {
   const router = useRouter();
@@ -35,8 +43,21 @@ export function useLogin(dict: LoginDict, lang: Locale) {
   const submit = (input: LoginInput) => {
     mutation.mutate(input, {
       onSuccess: () => {
-        const redirectTo = getSafeRedirectPath(searchParams.get('redirectTo'));
-        router.push(redirectTo ?? `/${lang}`);
+        const redirectTo = searchParams.get('redirectTo');
+
+        const internalPath = getSafeRedirectPath(redirectTo);
+        if (internalPath) {
+          router.push(internalPath);
+          return;
+        }
+
+        const externalUrl = getSafeExternalRedirectUrl(redirectTo, TRUSTED_REDIRECT_ORIGINS);
+        if (externalUrl) {
+          window.location.assign(externalUrl);
+          return;
+        }
+
+        router.push(`/${lang}`);
       },
     });
   };

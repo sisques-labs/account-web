@@ -36,14 +36,14 @@ Chain strategy: pending
 
 ## Phase 3: Wiring & Login Chain (PR 3)
 
-- [ ] 3.1 Modify `src/shared/config/env.ts` — add `export const TRUSTED_REDIRECT_ORIGINS = parseTrustedOrigins(process.env.NEXT_PUBLIC_TRUSTED_REDIRECT_ORIGINS)`, literal inline for Next build-time inlining.
-- [ ] 3.2 RED: Add to `src/core/auth/presentation/hooks/use-login/useLogin.hook.spec.tsx` — new case: allowlisted absolute `redirectTo` calls `window.location.assign` and never `router.push`; new case: relative `redirectTo` still uses `router.push` and never `assign`. Use `vi.mock('@/shared/config/env', async (importOriginal) => ({ ...(await importOriginal()), TRUSTED_REDIRECT_ORIGINS: new Set([...]) }))` and `vi.stubGlobal('location', { ...window.location, assign: vi.fn() })` with `vi.unstubAllGlobals()` in `afterEach`. Keep the existing 7 cases unmodified. Run the spec, confirm the 2 new cases fail.
-- [ ] 3.3 GREEN: Modify `src/core/auth/presentation/hooks/use-login/useLogin.hook.ts` — three-way chain: `getSafeRedirectPath(redirectTo)` first, else `getSafeExternalRedirectUrl(redirectTo, TRUSTED_REDIRECT_ORIGINS)` via `window.location.assign`, else `router.push(`/${lang}`)`; update JSDoc. Confirm 3.2's 2 new cases pass and all 7 existing cases still pass unmodified.
-- [ ] 3.4 Create `.env.example` at repo root — all four documented vars, `NEXT_PUBLIC_TRUSTED_REDIRECT_ORIGINS` shipped empty, comment block per design's format.
+- [x] 3.1 Modify `src/shared/config/env.ts` — add `export const TRUSTED_REDIRECT_ORIGINS = parseTrustedOrigins(process.env.NEXT_PUBLIC_TRUSTED_REDIRECT_ORIGINS)`, literal inline for Next build-time inlining.
+- [x] 3.2 RED: Add to `src/core/auth/presentation/hooks/use-login/useLogin.hook.spec.tsx` — new case: allowlisted absolute `redirectTo` calls `window.location.assign` and never `router.push`; new case: relative `redirectTo` still uses `router.push` and never `assign`. Use `vi.mock('@/shared/config/env', async (importOriginal) => ({ ...(await importOriginal()), TRUSTED_REDIRECT_ORIGINS: new Set([...]) }))` and `vi.stubGlobal('location', { ...window.location, assign: vi.fn() })` with `vi.unstubAllGlobals()` in `afterEach`. Keep the existing 7 cases unmodified. Run the spec, confirm the 2 new cases fail.
+- [x] 3.3 GREEN: Modify `src/core/auth/presentation/hooks/use-login/useLogin.hook.ts` — three-way chain: `getSafeRedirectPath(redirectTo)` first, else `getSafeExternalRedirectUrl(redirectTo, TRUSTED_REDIRECT_ORIGINS)` via `window.location.assign`, else `router.push(`/${lang}`)`; update JSDoc. Confirm 3.2's 2 new cases pass and all 7 existing cases still pass unmodified.
+- [x] 3.4 Added `NEXT_PUBLIC_TRUSTED_REDIRECT_ORIGINS` to `.env.example` at repo root, comment block per design's format. The sandbox's permission settings hard-deny both Read and Edit on any `.env*` path, so the user appended the block themselves via their own terminal (not a from-scratch create as design's Decision 5 assumed — the file already existed with 4 unrelated vars).
 
 ## Phase 4: Regression & Final Verification
 
-- [ ] 4.1 Regression check: run `pnpm test src/shared/lib/safe-redirect.spec.ts` (read-only) — confirm all 10 existing cases pass, file byte-for-byte untouched.
-- [ ] 4.2 Run `pnpm test:coverage` — confirm 80% threshold (lines/functions/branches/statements) green.
-- [ ] 4.3 Run `pnpm lint` — confirm no errors.
-- [ ] 4.4 Run `pnpm tsc --noEmit` — confirm no type errors.
+- [x] 4.1 Regression check: run `pnpm test src/shared/lib/safe-redirect.spec.ts` (read-only) — confirm all 10 existing cases pass, file byte-for-byte untouched.
+- [x] 4.2 Run `pnpm test:coverage` — confirm 80% threshold (lines/functions/branches/statements) green.
+- [x] 4.3 Run `pnpm lint` — confirm no errors.
+- [x] 4.4 Run `pnpm tsc --noEmit` — confirm no type errors.
