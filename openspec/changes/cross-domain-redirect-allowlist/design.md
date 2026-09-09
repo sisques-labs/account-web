@@ -234,7 +234,8 @@ planned RED test:
 | `http://app.sisqueslabs.com` | Scheme differs → `/${lang}` |
 | `javascript:alert(1)`, `data:text/html,x` | Opaque origin → `/${lang}` |
 | `https:\app.sisqueslabs.com` | Backslash rejected pre-parse → `/${lang}` |
-| `https://app.sisqueslabs.com%00.evil.com` | Control char rejected pre-parse → `/${lang}` |
+| `https://app.sisqueslabs.com%00.evil.com` | Percent-encoded null rejected by `new URL()`'s own parse failure → `/${lang}` |
+| `https://app.sisques<TAB>labs.com` (literal control char, unencoded) | Rejected pre-parse by the raw C0-range guard — `new URL()` would otherwise silently strip it and fuse the hostname into an allowlisted origin → `/${lang}` |
 | `//evil.com`, `/\evil.com` | Rejected by unchanged `getSafeRedirectPath`, then by step 3 → `/${lang}` |
 
 Failure behavior is uniform: **return `null`, never throw**, and the call site
