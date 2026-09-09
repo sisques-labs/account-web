@@ -15,7 +15,7 @@ jobs:
   docker:
     uses: sisques-labs/workflows/.github/workflows/docker-smoke-build.yml@main
     with:
-      image_name: nextjs-template
+      image_name: account-web
       platforms: linux/amd64
       scan_image: true
     permissions:

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="Sisqués">
+  <rect width="48" height="48" rx="12" fill="#2563eb" />
+  <text
+    x="24"
+    y="33"
+    text-anchor="middle"
+    font-family="Inter, -apple-system, 'Segoe UI', sans-serif"
+    font-size="26"
+    font-weight="800"
+    fill="#fff"
+  >S</text>
+</svg>
