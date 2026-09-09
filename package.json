@@ -1,13 +1,13 @@
 {
-  "name": "sisques-labs/nextjs-template",
-  "description": "Sisques Labs Next.js frontend template — DDD + Hexagonal (Screaming Architecture)",
+  "name": "sisqueslabs/account-web",
+  "description": "Sisques Labs Account Web",
   "author": "Sisques Labs",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sisques-labs/nextjs-template.git"
+    "url": "https://github.com/sisques-labs/account-web.git"
   },
-  "homepage": "https://github.com/sisques-labs/nextjs-template",
-  "version": "0.1.0",
+  "homepage": "https://github.com/sisques-labs/account-web",
+  "version": "0.0.1",
   "packageManager": "pnpm@11.20.0",
   "private": true,
   "scripts": {

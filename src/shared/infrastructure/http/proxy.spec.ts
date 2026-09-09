@@ -74,6 +74,52 @@ describe('proxyTo', () => {
     expect(init.duplex).toBeUndefined();
   });
 
+  it('injects the refresh_token cookie into the body when proxying POST /v1/auth/refresh', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      status: 200,
+      body: null,
+      headers: { forEach: () => {}, getSetCookie: () => [] } as unknown as Headers,
+    } as Response);
+    vi.stubGlobal('fetch', fetchMock);
+
+    const req = request('/api/v1/auth/refresh', { method: 'POST' });
+    req.cookies.set('refresh_token', 'the-refresh-token');
+
+    await proxyTo(req, internalUrl('/api/v1/auth/refresh'));
+
+    const [, init] = fetchMock.mock.calls[0];
+    expect(init.body).toBe(JSON.stringify({ refreshToken: 'the-refresh-token' }));
+    expect(init.duplex).toBeUndefined();
+    const forwardedHeaders = init.headers as Headers;
+    expect(forwardedHeaders.get('content-type')).toBe('application/json');
+  });
+
+  it('returns 401 without calling upstream when refreshing without a refresh_token cookie', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const req = request('/api/v1/auth/refresh', { method: 'POST' });
+
+    const res = await proxyTo(req, internalUrl('/api/v1/auth/refresh'));
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(res.status).toBe(401);
+  });
+
+  it('does not inject a body for a GET request to a path merely ending in the refresh suffix', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      status: 200,
+      body: null,
+      headers: { forEach: () => {}, getSetCookie: () => [] } as unknown as Headers,
+    } as Response);
+    vi.stubGlobal('fetch', fetchMock);
+
+    await proxyTo(request('/api/v1/auth/refresh', { method: 'GET' }), internalUrl('/api/v1/auth/refresh'));
+
+    const [, init] = fetchMock.mock.calls[0];
+    expect(init.body).toBeUndefined();
+  });
+
   it('strips hop-by-hop headers from the upstream response before returning it', async () => {
     const upstreamHeaders = {
       forEach: (cb: (value: string, key: string) => void) => {

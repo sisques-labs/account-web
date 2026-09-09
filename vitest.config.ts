@@ -29,6 +29,7 @@ export default defineConfig({
         'src/shared/infrastructure/http/query.client.ts',
         'src/shared/infrastructure/http/http-logger.ts',
         'src/shared/presentation/i18n/get-dictionary.ts',
+        'src/**/*-skeleton/*-skeleton.tsx',
       ],
       thresholds: {
         lines: 80,

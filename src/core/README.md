@@ -1,9 +1,13 @@
 # src/core — bounded contexts
 
-No bounded contexts yet. This is a fresh frontend template; the first
-context you add here defines the pattern every subsequent one follows.
-See `AGENTS.md` and `.claude/skills/architecture/SKILL.md` for the layer
-rules and naming conventions to apply.
+`auth` (`src/core/auth/`) is the first bounded context and the canonical
+example for every one after it — see [`src/core/auth/README.md`](./auth/README.md).
+`tenancy` (`src/core/tenancy/`) is the first GraphQL-backed context — see
+[`src/core/tenancy/README.md`](./tenancy/README.md) for its transport
+decision and the deviations it was forced into by the real `account-api`
+contracts.
+See `AGENTS.md` and `.claude/skills/architecture/SKILL.md` for the full
+layer rules and naming conventions.
 
 ```
 src/core/{context}/
@@ -16,12 +20,14 @@ src/core/{context}/
 │   └── interfaces/         use-case input DTOs
 ├── infrastructure/
 │   ├── repositories/graphql/  queries/, mutations/, {context}.gql.repository.ts
+│   ├── repositories/rest/     REST-backed contexts (auth's convention) — no queries/mutations subfolders
 │   └── store/                  Zustand stores
 └── presentation/
     ├── screens/
     ├── hooks/       TanStack Query wrappers
     ├── providers/   {context}.providers.tsx — nest it into
-    │                shared/presentation/providers/providers.tsx
+    │                shared/presentation/providers/providers.tsx (only if the
+    │                context actually needs one — auth doesn't)
     └── i18n/        en.ts + es.ts, wired into
                       shared/presentation/i18n/get-dictionary.ts
 ```

@@ -9,13 +9,13 @@
   /* ── Paper grain texture ───────────────────────────────────────────────── */
   .paper-grain {
     background-color:  var(--paper);
-    background-image:  radial-gradient(circle at 1px 1px, oklch(0.70 0.02 80 / 0.25) 1px, transparent 0);
+    background-image:  radial-gradient(circle at 1px 1px, rgba(100, 116, 139, 0.2) 1px, transparent 0);
     background-size:   24px 24px;
   }
 
   .paper-grain-dark {
     background-color:  var(--paper);
-    background-image:  radial-gradient(circle at 1px 1px, oklch(0.30 0.02 80 / 0.45) 1px, transparent 0);
+    background-image:  radial-gradient(circle at 1px 1px, rgba(100, 116, 139, 0.35) 1px, transparent 0);
     background-size:   24px 24px;
   }
 
@@ -61,10 +61,10 @@
   .card {
     background-color: var(--paper);
     border:           1px solid var(--rule);
-    border-radius:    6px;
+    border-radius:    var(--radius-md, 8px);
     box-shadow:
-      0 1px 3px oklch(0.22 0.025 60 / 0.08),
-      0 1px 2px oklch(0.22 0.025 60 / 0.04);
+      0 1px 3px rgba(15, 23, 42, 0.08),
+      0 1px 2px rgba(15, 23, 42, 0.04);
   }
 
   /* ── Button reset ──────────────────────────────────────────────────────── */
@@ -130,9 +130,9 @@
 
   /* ── Headline ──────────────────────────────────────────────────────────── */
   .headline {
-    font-family: var(--font-serif);
-    font-size:   1.5rem;
-    font-weight: 400;
+    font-family: var(--font-sans);
+    font-size:   18px;
+    font-weight: 700;
     line-height: 1.25;
     color:       var(--ink);
   }

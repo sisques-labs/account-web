@@ -40,6 +40,8 @@ function mockSessionStore(
     clearAccessToken,
     redirectToLogin,
     setAccessToken: vi.fn(),
+    hasBootstrapped: true,
+    setHasBootstrapped: vi.fn(),
   });
 }
 
@@ -83,7 +85,7 @@ describe('axios.client — response interceptor', () => {
 
     const { http } = await import('./axios.client');
 
-    const error = make401Error('/auth/refresh');
+    const error = make401Error('/v1/auth/refresh');
     const errorHandler = getErrorInterceptorHandler(http);
 
     await expect(errorHandler(error)).rejects.toBeDefined();
@@ -255,6 +257,8 @@ describe('axios.client — doRefresh', () => {
       clearAccessToken: vi.fn(),
       redirectToLogin: vi.fn(),
       setAccessToken,
+      hasBootstrapped: true,
+      setHasBootstrapped: vi.fn(),
     });
 
     const { doRefresh, bareHttp } = await import('./axios.client');
@@ -264,6 +268,6 @@ describe('axios.client — doRefresh', () => {
 
     expect(token).toBe('fresh-token');
     expect(setAccessToken).toHaveBeenCalledWith('fresh-token');
-    expect(bareHttp.post).toHaveBeenCalledWith('/auth/refresh');
+    expect(bareHttp.post).toHaveBeenCalledWith('/v1/auth/refresh');
   });
 });
