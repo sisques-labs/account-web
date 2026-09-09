@@ -3,12 +3,18 @@ import { useSessionStore, isAuthenticated } from './session.store';
 
 describe('session.store', () => {
   beforeEach(() => {
-    useSessionStore.setState({ accessToken: null });
+    useSessionStore.setState({ accessToken: null, hasBootstrapped: false });
   });
 
-  it('starts with a null access token', () => {
+  it('starts with a null access token and an unfinished bootstrap', () => {
     expect(useSessionStore.getState().accessToken).toBeNull();
+    expect(useSessionStore.getState().hasBootstrapped).toBe(false);
     expect(isAuthenticated()).toBe(false);
+  });
+
+  it('setHasBootstrapped marks the bootstrap as finished', () => {
+    useSessionStore.getState().setHasBootstrapped();
+    expect(useSessionStore.getState().hasBootstrapped).toBe(true);
   });
 
   it('setAccessToken stores the token', () => {

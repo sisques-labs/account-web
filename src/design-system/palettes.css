@@ -1,5 +1,5 @@
 /* =============================================================================
-   Design System — Palette Overrides  (Tailwind v4, corrected)
+   Design System — Palette Overrides  (Tailwind v4)
    ─────────────────────────────────────────────────────────────────────────────
    Only bare vars (--paper, --forest …) need to be overridden here.
    Because theme.css uses @theme inline, the chain is:
@@ -19,72 +19,77 @@
 
 /* ═══════════════════════════════════════════════════════════════════════════
    DARK PALETTE
+   Derived from the canvas's slate/blue scale (design-import/colors.css) by
+   inverting lightness the same way the previous editorial palette did:
+   paper gets darker as the surface "deepens" (page → card → sunken), ink
+   gets lighter as it gets more prominent (tertiary → primary).
    ═══════════════════════════════════════════════════════════════════════════ */
 
 body.palette-dark,
 body.palette-dark .paper-grain,
 html.dark body,
 html.dark body .paper-grain {
-  --paper:       oklch(0.20 0.018 80);
-  --paper-2:     oklch(0.24 0.022 80);
-  --paper-3:     oklch(0.28 0.025 80);
+  --paper:       #0f172a; /* slate-800 — page bg */
+  --paper-2:     #1e293b; /* slate-700 — card / elevated surface */
+  --paper-3:     #334155; /* slate-600 — sunken / hover surface */
 
-  --ink:         oklch(0.94 0.018 80);
-  --ink-2:       oklch(0.78 0.022 80);
-  --ink-3:       oklch(0.60 0.02  70);
+  --ink:         #f1f5f9; /* slate-50 — primary text */
+  --ink-2:       #94a3b8; /* slate-300 — secondary text */
+  --ink-3:       #64748b; /* slate-400 — tertiary text */
 
-  --rule:        oklch(0.40 0.025 70);
+  --rule:        #475569; /* slate-500 — visible border on dark surfaces */
 
-  --forest:      oklch(0.72 0.10  145);
-  --forest-2:    oklch(0.78 0.08  145);
-  --forest-3:    oklch(0.55 0.07  145);
-  --forest-bg:   oklch(0.30 0.04  140);
+  --forest:      #60a5fa; /* blue-400 — primary, legible on dark */
+  --forest-2:    #93c5fd; /* blue-300 — hover, lighter */
+  --forest-3:    #3b82f6; /* blue-500 — darker variant */
+  --forest-bg:   #172554; /* blue-950-ish — subtle dark bg */
 
-  --honey:       oklch(0.80 0.13  75);
-  --honey-2:     oklch(0.86 0.13  65);
-  --terracotta:  oklch(0.76 0.13  35);
-  --sage:        oklch(0.62 0.04  130);
-  --plum:        oklch(0.68 0.08  340);
-  --sky:         oklch(0.78 0.07  230);
+  --honey:       #fbbf24; /* amber-400 */
+  --honey-2:     #fcd34d; /* amber-300 */
+  --terracotta:  #f87171; /* red-400 */
+  --sage:        #4ade80; /* green-400 */
+  --plum:        #94a3b8; /* slate-300 — neutral-adjacent */
+  --sky:         #93c5fd; /* blue-300 */
 
-  /* ✚ chip bg tints — were missing in v1, chips kept light-mode background */
-  --honey-bg:    oklch(0.28 0.05  75);
-  --terra-bg:    oklch(0.28 0.05  35);
-  --sage-bg:     oklch(0.28 0.03  130);
-  --plum-bg:     oklch(0.28 0.04  340);
-  --sky-bg:      oklch(0.28 0.04  230);
+  --honey-bg:    #451a03; /* amber-950-ish */
+  --terra-bg:    #450a0a; /* red-950-ish */
+  --sage-bg:     #052e16; /* green-950-ish */
+  --plum-bg:     #1e293b; /* slate-700 */
+  --sky-bg:      #172554; /* blue-950-ish */
 }
 
 /* Dark mode visual refinements — explicit palette toggle only */
 body.palette-dark {
-  background: oklch(0.18 0.018 80) !important;
+  background: #0f172a !important;
 }
 
 body.palette-dark .card {
-  background-color: oklch(0.22 0.018 80);
-  border-color:     oklch(0.32 0.02  70);
+  background-color: #1e293b;
+  border-color:     #334155;
 }
 
 /* Chip overrides kept for specificity — bare vars above handle the colours,
    but .chip has an explicit background-color rule that needs a nudge.        */
-body.palette-dark .chip               { background-color: oklch(0.28 0.018 80); color: oklch(0.78 0.022 80); }
-body.palette-dark .chip.forest        { background-color: oklch(0.30 0.04  140); color: oklch(0.72 0.10  145); }
-body.palette-dark .chip.honey         { background-color: oklch(0.28 0.05  75);  color: oklch(0.80 0.13  75);  }
-body.palette-dark .chip.terra         { background-color: oklch(0.28 0.05  35);  color: oklch(0.76 0.13  35);  }
-body.palette-dark .chip.sage          { background-color: oklch(0.28 0.03  130); color: oklch(0.62 0.04  130); }
+body.palette-dark .chip               { background-color: #1e293b; color: #94a3b8; }
+body.palette-dark .chip.forest        { background-color: #172554; color: #60a5fa; }
+body.palette-dark .chip.honey         { background-color: #451a03; color: #fbbf24; }
+body.palette-dark .chip.terra         { background-color: #450a0a; color: #f87171; }
+body.palette-dark .chip.sage          { background-color: #052e16; color: #4ade80; }
 
 /* Paper grain — dark variant */
 body.palette-dark .paper-grain-dark,
 html.dark body    .paper-grain-dark {
-  background-color:  oklch(0.18 0.018 80);
-  background-image:  radial-gradient(circle at 1px 1px, oklch(0.30 0.02 80 / 0.6) 1px, transparent 0);
+  background-color:  #0f172a;
+  background-image:  radial-gradient(circle at 1px 1px, rgba(148, 163, 184, 0.35) 1px, transparent 0);
   background-size:   24px 24px;
 }
 
 
 /* ═══════════════════════════════════════════════════════════════════════════
    PASTEL PALETTE
-   Applied via body.palette-pastel only — no html.dark bridge needed.
+   Applied via body.palette-pastel only — no html.dark bridge needed. Not part
+   of the Sisques Account brand (the canvas defines no pastel variant) and not
+   wired into any UI toggle in this app; left as an unused, opt-in palette.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 body.palette-pastel {
@@ -110,7 +115,6 @@ body.palette-pastel {
   --plum:        oklch(0.62 0.08  340);
   --sky:         oklch(0.78 0.07  220);
 
-  /* ✚ chip bg tints — were missing in v1 */
   --honey-bg:    oklch(0.97 0.06  65);
   --terra-bg:    oklch(0.97 0.05  30);
   --sage-bg:     oklch(0.96 0.04  145);
