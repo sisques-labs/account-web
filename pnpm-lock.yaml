@@ -124,7 +124,7 @@ importers:
         specifier: 4.3.3
         version: 4.3.3
       '@tanstack/react-query-devtools':
-        specifier: ^5.101.2
+        specifier: 5.101.4
         version: 5.101.4(@tanstack/react-query@5.101.4(react@19.2.8))(react@19.2.8)
       '@testing-library/jest-dom':
         specifier: ^6.9.1
